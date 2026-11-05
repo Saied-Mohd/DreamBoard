@@ -142,6 +142,12 @@ li.lit .puffs{filter:drop-shadow(0 0 14px var(--thread))}
 .table button.ghostgold{background:transparent;border-color:rgba(226,188,110,.55);color:var(--gold)}
 .pullrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .mixrow{display:grid;gap:8px}
+.intent{display:grid;gap:8px}
+.intent input{font:inherit;font-size:16px;color:#efe8fb;background:rgba(255,255,255,.06);border:1px solid rgba(226,188,110,.3);border-radius:10px;padding:9px 12px;width:100%;box-sizing:border-box}
+.intent input::placeholder{color:#a99fc4}
+.rintent{margin:0;font-style:italic;font-size:15px}
+.listenrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.listenrow .lstat{font-family:var(--mono);font-size:12px;color:#cbbfe4}
 .mixdecks{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
 .mixdeck{position:relative;background:none;border:0;padding:0;color:#f5dca3;cursor:pointer;display:grid;justify-items:center;gap:6px;font:inherit}
 .mixdeck:hover{filter:brightness(1.12)}
@@ -446,6 +452,16 @@ li.lesson.flash .puffs{filter:drop-shadow(0 0 22px var(--glow))}
           </div>
         </div>
       </div>
+      <div class="intent">
+        <label class="pulllabel" for="intention">Your intention (optional)</label>
+        <input type="text" id="intention" placeholder="What do I need to know in this moment?">
+        <div class="rtypes chips" role="group" aria-label="Kind of reading">
+          <button type="button" class="chip rtype" data-t="story" aria-pressed="true">Past · Present · Future</button>
+          <button type="button" class="chip rtype" data-t="present" aria-pressed="false">Present</button>
+          <button type="button" class="chip rtype" data-t="future" aria-pressed="false">Future</button>
+          <button type="button" class="chip rtype" data-t="past" aria-pressed="false">Past</button>
+        </div>
+      </div>
       <div class="mixrow" id="mixRow" hidden>
         <div class="mixdecks">
           <button type="button" class="mixdeck" data-d="mine"><span class="mstack"><i></i><i></i><i></i><span class="mtitle">Lesson deck</span></span><span class="mleft"></span></button>
@@ -467,6 +483,7 @@ li.lesson.flash .puffs{filter:drop-shadow(0 0 22px var(--glow))}
         <div class="aibox" id="aiBox" hidden>
           <div class="pulllabel" id="aiLabel">The reading</div>
           <div class="aitext" id="aiText"></div>
+          <div class="listenrow" id="listenRow" hidden><button type="button" class="ghostgold" id="listenBtn">▶ Listen</button><span class="lstat" id="listenStat"></span></div>
         </div>
         <div class="row">
           <button type="button" class="ghostgold" id="aiBtn">Read my spread</button>
@@ -620,6 +637,28 @@ li.lesson.flash .puffs{filter:drop-shadow(0 0 22px var(--glow))}
     </section>
 
     <section class="setsec">
+      <h3>Voice</h3>
+      <p class="setnote" id="voiceWhere"></p>
+      <label class="setlbl" for="falKey">fal.ai key</label>
+      <div class="setrow"><input type="password" id="falKey" autocomplete="off" spellcheck="false" placeholder="Paste your fal key"><button type="button" class="ghost" id="falShow">Show</button></div>
+      <p class="setnote">Stored only on this device. Uses Kokoro, which costs about 2 cents per 1,000 characters, so a full reading is usually under 10 cents.</p>
+      <label class="setlbl" for="voicePick">Voice</label>
+      <select id="voicePick">
+        <option value="device">This device’s built-in voice (free, works anywhere)</option>
+        <optgroup label="Kokoro on fal.ai · female">
+          <option value="af_heart">Heart</option><option value="af_bella">Bella</option><option value="af_nicole">Nicole</option><option value="af_sarah">Sarah</option><option value="af_sky">Sky</option><option value="af_nova">Nova</option><option value="af_river">River</option><option value="af_aoede">Aoede</option><option value="af_kore">Kore</option><option value="af_jessica">Jessica</option><option value="af_alloy">Alloy</option>
+        </optgroup>
+        <optgroup label="Kokoro on fal.ai · male">
+          <option value="am_michael">Michael</option><option value="am_fenrir">Fenrir</option><option value="am_onyx">Onyx</option><option value="am_adam">Adam</option><option value="am_eric">Eric</option><option value="am_liam">Liam</option><option value="am_echo">Echo</option><option value="am_puck">Puck</option>
+        </optgroup>
+      </select>
+      <label class="setlbl" for="voiceSpeed">Speaking speed: <b id="speedVal"></b></label>
+      <input type="range" id="voiceSpeed" min="0.7" max="1.3" step="0.05">
+      <div class="setrow"><button type="button" class="ghost" id="voiceTest">Hear a sample</button><button type="button" class="ghost" id="falClear">Remove key</button></div>
+      <p class="setnote" id="voiceStatus"></p>
+    </section>
+
+    <section class="setsec">
       <h3>Tarot</h3>
       <label class="setcheck"><input type="checkbox" id="revOn"> Reversed cards in Traditional tarot</label>
       <label class="setlbl" for="revChance">Chance a card lands reversed: <b id="revVal"></b></label>
@@ -646,11 +685,13 @@ li.lesson.flash .puffs{filter:drop-shadow(0 0 22px var(--glow))}
 const $=id=>document.getElementById(id);
 /* per-device preferences (never synced, never in backups) */
 const PREF_KEY='dream-board-prefs',ORKEY='dream-board-openrouter-key';
-const DEFAULT_PREFS={model:'~deepseek/deepseek-pro-latest',customModel:'',readLen:'medium',readTone:'gentle',allowClaude:false,reversals:true,revChance:50,showUpright:true,skyFollowsTime:true,motion:true};
+const DEFAULT_PREFS={model:'~deepseek/deepseek-pro-latest',customModel:'',readLen:'medium',readTone:'gentle',allowClaude:false,voice:'device',voiceSpeed:0.95,readType:'story',reversals:true,revChance:50,showUpright:true,skyFollowsTime:true,motion:true};
 let prefs=Object.assign({},DEFAULT_PREFS);
 try{Object.assign(prefs,JSON.parse(localStorage.getItem(PREF_KEY)||'{}'));}catch(e){}
 function savePrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify(prefs));}catch(e){}}
-let memKey='';
+let memKey='',memFal='';const FALKEY='dream-board-fal-key';
+function getFal(){try{return localStorage.getItem(FALKEY)||memFal;}catch(e){return memFal;}}
+function setFal(k){memFal=k||'';try{k?localStorage.setItem(FALKEY,k):localStorage.removeItem(FALKEY);}catch(e){}}
 function getKey(){try{return localStorage.getItem(ORKEY)||memKey;}catch(e){return memKey;}}
 function setKey(k){memKey=k||'';try{k?localStorage.setItem(ORKEY,k):localStorage.removeItem(ORKEY);}catch(e){}}
 /* capture the pristine page so an offline copy can be rebuilt from it */
@@ -856,7 +897,11 @@ const SUIT_REV={"Wands": ["Delays, or a spark that fizzles. Wait for real fire."
 const TRAD=[...MAJOR.map((m,i)=>({id:'M'+i,name:m[0],num:'Major Arcana · '+ROMAN[i],meaning:m[1],rev:MAJOR_REV[i]}))];
 Object.entries(SUITS).forEach(([suit,[elem,ms]])=>ms.forEach((m,i)=>TRAD.push({id:suit+i,name:RANKS[i]+' of '+suit,num:elem,meaning:m,rev:SUIT_REV[suit][i]})));
 
-const SPREADS={1:['Your message'],2:['What is happening','What to do'],3:['Past','Present','Future']};
+const SPREADS_BY={story:{1:['Your story'],2:['Where you’ve been','Where you’re going'],3:['Past','Present','Future']},
+ present:{1:['This moment'],2:['What is','What to know'],3:['Within you','Around you','What to do now']},
+ future:{1:['What’s coming'],2:['On the way','Where it leads'],3:['Soon','Next','Where it leads']},
+ past:{1:['What shaped you'],2:['The root','What it taught you'],3:['Long ago','The lesson','What it left you']}};
+const RTYPE_NAMES={story:'Past · Present · Future',present:'Present moment',future:'Future',past:'Past'};
 let deck='mine';
 const deckState={mine:{order:[],used:new Set()},clear:{order:[],used:new Set()},trad:{order:[],used:new Set()}};
 const DECKNAMES={mine:'Lesson deck',clear:'Clear Skies',trad:'Traditional tarot',mix:'Mixed spread'};
@@ -1003,7 +1048,7 @@ function makeCard({c0,isRev},label,i,mini){
 }
 function resetReadingUI(show){
   $('readingNotes').value='';$('saveReading').hidden=!show||!db;
-  lastReading=null;$('aiBox').hidden=true;$('aiText').textContent='';if(aiCtl)aiCtl.abort();
+  lastReading=null;$('aiBox').hidden=true;$('aiText').textContent='';$('listenRow').hidden=true;if(aiCtl)aiCtl.abort();if(typeof stopAudio==='function')stopAudio();
 }
 function renderSpread(items,labels){
   const spread=$('spread');spread.replaceChildren();spread.classList.remove('mixed');
@@ -1012,7 +1057,7 @@ function renderSpread(items,labels){
 }
 function pull(n){
   const items=draw(deck,n);
-  const labels=deck==='clear'?items.map(()=>'A gentle reminder'):(SPREADS[items.length]||[]);
+  const labels=deck==='clear'?items.map(()=>'A gentle reminder'):((SPREADS_BY[prefs.readType]||SPREADS_BY.story)[items.length]||[]);
   renderSpread(items,labels);
   lastPull={deck,cards:items.map((x,i)=>({id:x.c0.id,name:x.c0.name,label:labels[i]||'',reversed:!!x.isRev,deck:x.d,meaning:x.isRev?x.c0.rev:x.c0.meaning}))};
   if(items.length<n)$('tarotHint').textContent='Only '+items.length+' card'+(items.length===1?' was':'s were')+' left in the deck. Return all cards to start again.';
@@ -1134,38 +1179,46 @@ $('orTest').onclick=async()=>{
 
 /* ---------- AI spread reading ---------- */
 let lastReading=null, aiCtl=null;
-const LEN_WORDS={short:'about 150 to 220 words',medium:'about 350 to 500 words',long:'about 700 to 1000 words'};
 const TONE_WORDS={gentle:'gentle, warm, and encouraging',direct:'direct, honest, and grounded, without sugarcoating',poetic:'poetic, mystical, and image-rich, while staying clear'};
-function spreadPrompt(cards){
+const LEN_WORDS={short:'about 250 to 350 words',medium:'about 450 to 650 words',long:'about 800 to 1100 words'};
+const TYPE_GUIDE={
+story:'Tell it as a story, narrated to the person, moving through time: what has happened in their past, what is unfolding in their present, and what is coming in their future, as these cards reveal it. Let the earlier cards in the spread carry the past, the middle the present, and the later cards the future, unless a card’s position says otherwise. Build it like a narrative with a beginning, a turning point, and where the path leads, not a list of card meanings.',
+present:'Focus entirely on the present moment: the energy around the person right now, what is asking for their attention, what they may not be seeing, and what would serve them today. Every card speaks to now.',
+future:'Focus on what is coming: the path the cards show ahead, the energies on their way, the choices and turning points that may arise, and how the person can meet them. Speak of the future as the direction things are flowing, not as a fixed fate.',
+past:'Focus on the past: what has shaped the person, the roots of where they stand now, what was learned or left unresolved, and how that past still lives in them. Speak to the past with compassion.'};
+function spreadPrompt(cards,intention,rtype){
   const lines=cards.map((c,i)=>{
     const deckName=DECKNAMES[c.deck]||'';
-    const kind=c.deck==='trad'?'a classic tarot card':c.deck==='clear'?'a personal reminder card from the querent’s own deck':'a personal lesson card from the querent’s own deck, written in their own words';
+    const kind=c.deck==='trad'?'a classic tarot card':c.deck==='clear'?'a personal reminder card from the person’s own deck':'a personal lesson card from the person’s own deck, written in their own words';
     return (i+1)+'. '+(c.label&&c.label!==deckName?'Position: '+c.label+' | ':'')+'Deck: '+deckName+' ('+kind+') | Card: '+c.name+(c.deck==='trad'?' | Orientation: '+(c.reversed?'reversed':'upright'):'')+'\n   Meaning on the card: '+(c.meaning||'');
   }).join('\n');
-  return 'You are an intuitive tarot reader giving a reading for one person.\n\n'+
-'Use ONLY the cards below. You know nothing else about the person: do not guess at their life, relationships, job, history, or circumstances, and do not invent facts about them. Personal deck cards carry the person’s own words; treat those words as that card’s meaning.\n\n'+
-'Read the spread as one story. Briefly honor each card in its place, then spend most of the reading on how the cards speak to each other: the pairs and combinations, the tensions, the echoes, and what unfolds from first card to last. Respect reversed cards as reversed. End with one short closing message and one question the person can sit with, to help them listen to their own intuition.\n\n'+
-'Write in a voice that is '+TONE_WORDS[prefs.readTone]+'. Length: '+LEN_WORDS[prefs.readLen]+'. Plain text with short paragraphs; no headings, no bullet lists, no markdown.\n\nThe spread:\n'+lines;
+  const intent=(intention||'').trim();
+  return 'You are an intuitive tarot reader giving a reading to one person, speaking directly to them as "you".\n\n'+
+(intent?'Their intention for this reading, in their own words: "'+intent+'"\nLet the whole reading answer this intention.\n\n':'They did not set an intention, so read what the cards most want them to hear.\n\n')+
+'Use ONLY the cards below'+(intent?' and their intention':'')+'. You know nothing else about this person. Speak in the language of the cards, their themes, energies, and turning points. Do not invent specific people, places, events, or facts about their life. Personal deck cards carry the person’s own words; treat those words as that card’s meaning.\n\n'+
+'The kind of reading: '+TYPE_GUIDE[rtype||'story']+'\n\n'+
+'Weave the cards together rather than reading them one at a time: show how they combine, where they echo or pull against each other, and how one leads into the next. Honor reversed cards as reversed. Close with a short message to carry with them and one question to sit with, so they can listen to their own intuition.\n\n'+
+'Voice: '+TONE_WORDS[prefs.readTone]+'. Length: '+LEN_WORDS[prefs.readLen]+'. This will also be read aloud, so write flowing spoken prose in short paragraphs, with no headings, lists, symbols, or markdown.\n\nThe cards:\n'+lines;
 }
 async function readSpread(){
   if(!lastPull||!lastPull.cards.length)return;
   const box=$('aiBox'),out=$('aiText');box.hidden=false;
-  const prompt=spreadPrompt(lastPull.cards);
+  const prompt=spreadPrompt(lastPull.cards,$('intention').value,prefs.readType);stopAudio();$('listenRow').hidden=true;
   const useClaude=inClaude&&prefs.allowClaude;
   if(inClaude&&!useClaude){out.classList.remove('thinking');$('aiLabel').textContent='The reading';
     out.textContent='Readings are set to use DeepSeek through OpenRouter, which only works in your standalone copy. To have Claude write readings here instead, turn that on in Settings.';return;}
   if(!inClaude&&!getKey()){out.classList.remove('thinking');out.textContent='Add your OpenRouter key in Settings to get a reading.';fillSettings();$('settings').hidden=false;return;}
   aiCtl=new AbortController();$('aiBtn').disabled=true;$('aiStop').hidden=false;
   out.classList.add('thinking');out.textContent='Reading the cards…';
-  $('aiLabel').textContent='The reading'+(useClaude?' · Claude':' · '+currentModel().replace(/^~?[^/]+\//,''));
+  $('aiLabel').textContent=RTYPE_NAMES[prefs.readType]+' reading'+(useClaude?' · Claude':' · '+currentModel().replace(/^~?[^/]+\//,''));
   try{
     if(useClaude){
       const sample=await claude.use('sample');if(!sample)throw {code:'no_sample'};
       const r=await sample(prompt,{signal:aiCtl.signal,cache:false,onText:({text})=>{out.classList.remove('thinking');out.textContent=text;}});
-      out.classList.remove('thinking');out.textContent=r.text;lastReading={text:r.text,model:'Claude'};
+      out.classList.remove('thinking');out.textContent=r.text;lastReading={text:r.text,model:'Claude'};$('listenRow').hidden=false;
     }else{
       const r=await openRouterChat([{role:'user',content:prompt}],prefs.readLen==='long'?6000:4000,aiCtl.signal);
-      out.classList.remove('thinking');out.textContent=r.text;lastReading={text:r.text,model:r.model};
+      out.classList.remove('thinking');out.textContent=r.text;lastReading={text:r.text,model:r.model};$('listenRow').hidden=false;
     }
   }catch(e){
     out.classList.remove('thinking');
@@ -1178,11 +1231,70 @@ $('aiBtn').onclick=readSpread;
 $('aiStop').onclick=()=>{if(aiCtl)aiCtl.abort();};
 applyMotion();
 
+/* ---------- voice ---------- */
+let audioEl=null,audioQueue=[],speakingBtn=null,speakToken=0;
+function chunkText(t,max){const paras=t.split(/\n\s*\n/).map(x=>x.trim()).filter(Boolean);const out=[];let cur='';
+  const push=x=>{if(x.length<=max){out.push(x);return;}const sents=x.match(/[^.!?]+[.!?]+["”’]?\s*|[^.!?]+$/g)||[x];let c='';sents.forEach(se=>{if((c+se).length>max&&c){out.push(c.trim());c='';}c+=se;});if(c.trim())out.push(c.trim());};
+  paras.forEach(p=>{if((cur+'\n\n'+p).length>max&&cur){push(cur);cur=p;}else cur=cur?cur+'\n\n'+p:p;});if(cur)push(cur);return out;}
+function stopAudio(){speakToken++;audioQueue=[];if(audioEl){audioEl.pause();audioEl=null;}try{speechSynthesis.cancel();}catch(e){}
+  if(speakingBtn){speakingBtn.textContent=speakingBtn.id==='voiceTest'?'Hear a sample':'▶ Listen';speakingBtn=null;}if($('listenStat'))$('listenStat').textContent='';}
+async function falSpeak(text,signalToken){
+  const key=getFal();if(!key)throw {code:'no_fal'};
+  const r=await fetch('https://fal.run/fal-ai/kokoro/american-english',{method:'POST',headers:{'Authorization':'Key '+key,'Content-Type':'application/json'},
+    body:JSON.stringify({prompt:text,voice:prefs.voice,speed:prefs.voiceSpeed})});
+  if(!r.ok){let m='';try{const j=await r.json();m=j.detail?(typeof j.detail==='string'?j.detail:JSON.stringify(j.detail)):'';}catch(e){}throw {code:'http',status:r.status,message:m};}
+  const j=await r.json();const url=j.audio&&j.audio.url;if(!url)throw {code:'empty'};return url;
+}
+function falErrorText(e){if(!e)return 'Couldn’t make the audio.';if(e.code==='no_fal')return 'Add your fal.ai key in Settings, or choose the device voice.';
+  if(e.code==='http'){if(e.status===401||e.status===403)return 'fal.ai didn’t accept that key. Check it in Settings.';if(e.status===402)return 'Your fal.ai balance has run out.';return 'fal.ai error '+e.status+(e.message?': '+e.message:'');}
+  return 'Couldn’t reach fal.ai. Check your connection.';}
+function deviceSpeak(text,btn,stat){
+  if(!('speechSynthesis' in window)){if(stat)stat.textContent='This device has no built-in voice.';return;}
+  const tok=++speakToken;try{speechSynthesis.cancel();}catch(e){}
+  const parts=chunkText(text,220);let i=0;
+  const next=()=>{if(tok!==speakToken)return;if(i>=parts.length){stopAudio();return;}const u=new SpeechSynthesisUtterance(parts[i++]);u.rate=prefs.voiceSpeed;u.onend=next;u.onerror=()=>stopAudio();speechSynthesis.speak(u);};
+  next();
+}
+async function speakText(text,btn,stat){
+  if(speakingBtn===btn&&btn){stopAudio();return;}
+  stopAudio();speakingBtn=btn;if(btn)btn.textContent='■ Stop';
+  const useFal=prefs.voice!=='device';
+  if(!useFal||inClaude){if(useFal&&inClaude&&stat)stat.textContent='fal.ai voices work in your standalone copy. Using this device’s voice here.';deviceSpeak(text,btn,stat);return;}
+  const tok=++speakToken;const parts=chunkText(text,1200);
+  if(stat)stat.textContent='Preparing the voice…';
+  const urls=parts.map(p=>falSpeak(p));urls.forEach(u=>u.catch(()=>{}));
+  for(let i=0;i<parts.length;i++){
+    let url;try{url=await urls[i];}catch(e){if(tok===speakToken){if(stat)stat.textContent=falErrorText(e);else toast(falErrorText(e));const b=speakingBtn;speakingBtn=null;if(b)b.textContent='▶ Listen';}return;}
+    if(tok!==speakToken)return;
+    if(stat)stat.textContent=parts.length>1?'Part '+(i+1)+' of '+parts.length:'';
+    await new Promise(res=>{audioEl=new Audio(url);audioEl.onended=res;audioEl.onerror=res;audioEl.play().catch(res);});
+    if(tok!==speakToken)return;
+  }
+  stopAudio();
+}
+$('listenBtn').onclick=()=>{if(lastReading)speakText(lastReading.text,$('listenBtn'),$('listenStat'));};
+document.querySelectorAll('.rtype').forEach(c=>{c.setAttribute('aria-pressed',String(c.dataset.t===prefs.readType));c.onclick=()=>{prefs.readType=c.dataset.t;savePrefs();
+  document.querySelectorAll('.rtype').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));};});
+function fillVoice(){
+  $('falKey').value=getFal();$('falKey').type='password';$('falShow').textContent='Show';$('falKey').disabled=inClaude;
+  $('voicePick').value=prefs.voice;$('voiceSpeed').value=prefs.voiceSpeed;$('speedVal').textContent=Number(prefs.voiceSpeed).toFixed(2)+'×';
+  $('voiceWhere').textContent=inClaude?'Inside Claude, readings are read aloud with this device’s voice. fal.ai voices work in your standalone copy.':'Pick a fal.ai voice for natural narration, or use this device’s free built-in voice.';
+  $('voiceStatus').textContent=getFal()&&!inClaude?'A fal.ai key is saved on this device.':'';
+}
+$('falShow').onclick=()=>{const t=$('falKey');t.type=t.type==='password'?'text':'password';$('falShow').textContent=t.type==='password'?'Show':'Hide';};
+$('falKey').addEventListener('change',()=>{setFal($('falKey').value.trim());$('voiceStatus').textContent=$('falKey').value.trim()?'fal.ai key saved on this device.':'';});
+$('falClear').onclick=()=>{setFal('');$('falKey').value='';$('voiceStatus').textContent='fal.ai key removed from this device.';};
+$('voicePick').onchange=()=>{prefs.voice=$('voicePick').value;savePrefs();};
+$('voiceSpeed').oninput=()=>{prefs.voiceSpeed=+$('voiceSpeed').value;$('speedVal').textContent=prefs.voiceSpeed.toFixed(2)+'×';savePrefs();};
+$('voiceTest').onclick=()=>{if($('falKey').value.trim())setFal($('falKey').value.trim());speakText('The cards are on the table. Take a breath, and listen.',$('voiceTest'),$('voiceStatus'));};
+$('openSettings').addEventListener('click',fillVoice);
+$('closeSettings').addEventListener('click',()=>{if(speakingBtn===$('voiceTest'))stopAudio();$('voiceTest').textContent='Hear a sample';});
+
 /* ---------- reading log ---------- */
 let lastPull=null, readings=[], rPendingDelete=null;
 $('saveReadingBtn').onclick=async()=>{
   if(!db||!lastPull)return;$('saveReadingBtn').disabled=true;
-  try{await db.collection('readings').add({deck:lastPull.deck,cards:lastPull.cards,notes:$('readingNotes').value,aiReading:lastReading&&lastReading.text||'',aiModel:lastReading&&lastReading.model||'',createdAt:new Date().toISOString()});
+  try{await db.collection('readings').add({deck:lastPull.deck,cards:lastPull.cards,notes:$('readingNotes').value,intention:$('intention').value.trim(),readType:prefs.readType,aiReading:lastReading&&lastReading.text||'',aiModel:lastReading&&lastReading.model||'',createdAt:new Date().toISOString()});
     $('saveReading').hidden=true;toast('Reading saved to your log');}
   catch(e){toast('Could not save the reading. Try again.');}
   $('saveReadingBtn').disabled=false;
@@ -1196,9 +1308,11 @@ function renderReadings(){
   readings.forEach(r=>{
     const card=el('div','rcard');
     card.append(el('div','rmeta',fmt(r.createdAt)+' · '+(DECKNAMES[r.deck]||'Lesson deck')));
+    if(r.intention)card.append(el('p','rintent','“'+r.intention+'”'));
     const rc=el('div','rcards');(r.cards||[]).forEach(c=>{const p=el('span','rpill');if(c.label)p.append(el('small',null,c.label));p.append(document.createTextNode(c.name+(c.reversed?' (reversed)':'')));rc.append(p);});card.append(rc);
     if(r.notes)card.append(el('p','rnotes',r.notes));
-    if(r.aiReading){const d=el('details');d.append(el('summary','rmeta','The reading'+(r.aiModel?' · '+r.aiModel.replace(/^~?[^/]+\//,''):'')),el('p','raitext',r.aiReading));card.append(d);}
+    if(r.aiReading){const d=el('details');d.append(el('summary','rmeta',(r.readType?RTYPE_NAMES[r.readType]+' reading':'The reading')+(r.aiModel?' · '+r.aiModel.replace(/^~?[^/]+\//,''):'')),el('p','raitext',r.aiReading));
+      const lb=btn('act strong','▶ Listen',()=>speakText(r.aiReading,lb,null));d.append(lb);card.append(d);}
     if(canWrite){const a=el('div','actions');
       if(rPendingDelete===r.id)a.append(el('span','confirm','Remove this reading?'),btn('act danger','Remove',async()=>{try{await db.collection('readings').doc(r.id).delete();rPendingDelete=null;}catch(e){toast('Could not remove. Try again.');}}),btn('act','Keep it',()=>{rPendingDelete=null;renderReadings();}));
       else a.append(btn('act danger','Remove',()=>{rPendingDelete=r.id;renderReadings();}));
@@ -1434,7 +1548,7 @@ $('backupBtn').onclick=async()=>{
   line('=== CLEAR SKIES ('+reminders.length+') ===');line();
   [...reminders].reverse().forEach(r=>{line((r.cardName?'['+r.cardName+'] ':'')+r.text);line();});
   line('=== TAROT READINGS ('+readings.length+') ===');line();
-  [...readings].reverse().forEach(r=>{line('['+fmt(r.createdAt)+'] '+(DECKNAMES[r.deck]||'Lesson deck'));(r.cards||[]).forEach(c=>line('  '+(c.label?c.label+': ':'')+c.name+(c.reversed?' (reversed)':'')));if(r.notes)line('  Notes: '+r.notes);if(r.aiReading)line('  The reading: '+r.aiReading);line();});
+  [...readings].reverse().forEach(r=>{line('['+fmt(r.createdAt)+'] '+(DECKNAMES[r.deck]||'Lesson deck'));(r.cards||[]).forEach(c=>line('  '+(c.label?c.label+': ':'')+c.name+(c.reversed?' (reversed)':'')));if(r.intention)line('  Intention: '+r.intention);if(r.notes)line('  Notes: '+r.notes);if(r.aiReading)line('  The reading: '+r.aiReading);line();});
   saveFile('dream-board-'+todayISO()+'.txt',L.join('\n'),'text/plain');
 };
 
