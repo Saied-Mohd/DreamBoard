@@ -1,0 +1,1468 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0b0b1e"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="Dream Board"><meta name="robots" content="noindex,nofollow"><link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Dream Board</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one column of drifting clouds over a sky that follows the clock (dawn, day, dusk, night). The sky is the theme, by design. */
+:root{
+  --sky-top:#0b0b1e; --sky-bot:#2a2152; --ink:#ece6f6; --muted:#b3abcb; --line:rgba(236,230,246,.22);
+  --cloud:#3a3160; --cloud-ink:#f1ecfa; --cloud-muted:#bdb4d6; --accent:#c3b4ff; --glow:#f2c97a; --star:#fff4d8;
+  --haze:rgba(0,0,0,.28); --field:rgba(255,255,255,.08); --danger:#ff9aa8; --thread:#f2c97a;
+  --display:"Gloock", Georgia, "Times New Roman", serif;
+  --body:"Newsreader", Georgia, "Times New Roman", serif;
+  --mono:"IBM Plex Mono", ui-monospace, Menlo, monospace;
+  color-scheme:dark;
+}
+:root[data-phase="dawn"]{--sky-top:#f3c4a6;--sky-bot:#c6b6ea;--ink:#2b2140;--muted:#5d4f73;--line:rgba(43,33,64,.18);
+  --cloud:#fffaf6;--cloud-ink:#2b2140;--cloud-muted:#7a6c8e;--accent:#7a4fc2;--glow:#e2903c;--star:#ffffff;
+  --haze:rgba(120,70,90,.18);--field:rgba(255,255,255,.55);--danger:#b23a4c;--thread:#c9772f;color-scheme:light}
+:root[data-phase="day"]{--sky-top:#6fb0ea;--sky-bot:#d4e9fb;--ink:#10304f;--muted:#3f5f7d;--line:rgba(16,48,79,.18);
+  --cloud:#ffffff;--cloud-ink:#1d2a3d;--cloud-muted:#5f6f84;--accent:#2f63c4;--glow:#e8a53a;--star:#ffffff;
+  --haze:rgba(40,90,140,.2);--field:rgba(255,255,255,.6);--danger:#b23a4c;--thread:#e8a53a;color-scheme:light}
+:root[data-phase="dusk"]{--sky-top:#2f2461;--sky-bot:#e38c78;--ink:#fff3ea;--muted:#f1d4cb;--line:rgba(255,243,234,.25);
+  --cloud:#fbeef2;--cloud-ink:#2b2140;--cloud-muted:#7d6a86;--accent:#7a3fb0;--glow:#ffcf8a;--star:#fff4d8;
+  --haze:rgba(60,20,60,.25);--field:rgba(255,255,255,.14);--danger:#b23a4c;--thread:#ffcf8a;color-scheme:dark}
+
+html,body{min-height:100%}
+body{background:var(--sky-top);color:var(--ink);font-family:var(--body);font-size:18px;line-height:1.6}
+.skybg{position:fixed;inset:0;z-index:-2;background:linear-gradient(180deg,var(--sky-top),var(--sky-bot));transition:background 2s}
+.wrap{max-width:680px;margin:0 auto;padding-inline:18px;padding-block:0 80px;overflow-x:clip}
+
+header.top{position:relative;padding-block:40px 26px;overflow:hidden}
+header.top canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.top-inner{position:relative;display:grid;gap:8px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--display);font-weight:400;font-size:clamp(40px,10vw,62px);line-height:1;margin:4px 0 6px;text-wrap:balance}
+.sub{max-width:52ch;margin:0;font-style:italic;color:var(--muted)}
+.toprow{display:flex;gap:14px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.count{font-family:var(--mono);font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+
+button{font-family:var(--mono);font-size:13px;cursor:pointer;border-radius:999px;padding:8px 16px;border:1px solid var(--accent);background:var(--accent);color:var(--cloud)}
+button:hover{filter:brightness(1.08)}
+button:focus-visible,input:focus-visible,textarea:focus-visible{outline:2px solid var(--glow);outline-offset:2px}
+button:disabled{opacity:.5;cursor:default}
+.moonbtn{display:inline-flex;align-items:center;gap:10px;background:transparent;color:var(--ink);border-color:var(--line);padding:7px 16px 7px 8px}
+.moonbtn .orb{width:22px;height:22px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fffbe9,var(--glow));box-shadow:0 0 14px var(--glow)}
+
+details.write{background:var(--field);border:1px solid var(--line);border-radius:16px;padding:14px 16px}
+details.write summary{cursor:pointer;font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.writebody{display:grid;gap:10px;margin-top:12px}
+textarea{width:100%;box-sizing:border-box;min-height:110px;resize:vertical;font:inherit;color:inherit;background:var(--field);border:1px solid var(--line);border-radius:12px;padding:12px 14px;line-height:1.55}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;justify-content:space-between}
+.hint{font-size:14px;color:var(--muted);margin:0}
+
+.controls{display:grid;gap:12px;margin:26px 0 6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{background:transparent;color:var(--ink);border-color:var(--line);padding:6px 13px;font-size:12px}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--sky-top);border-color:var(--ink)}
+input#search{width:100%;box-sizing:border-box;font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:999px;padding:8px 16px}
+input#search::placeholder{color:var(--muted)}
+
+.constbar{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;margin-top:10px;display:grid;gap:8px;padding:12px 14px;border-radius:14px;
+  background:var(--sky-top);border:1px solid var(--thread);color:var(--ink);box-shadow:0 8px 24px var(--haze)}
+.constbar .title{font-family:var(--display);font-size:20px;line-height:1.2}
+.constbar .row{justify-content:flex-start}
+
+.listwrap{position:relative}
+svg.threads{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:0;overflow:visible}
+ol.lessons{position:relative;z-index:1;list-style:none;margin:0;padding:0;display:grid;gap:66px;padding-block:52px 20px}
+li.lesson{transition:opacity .5s}
+.listwrap.constellating li.lesson:not(.lit){opacity:.28}
+.floater{animation:drift 9s ease-in-out infinite}
+li.lesson:nth-child(even) .floater{animation-name:drift2}
+@keyframes drift{0%,100%{transform:translate(0,0)}33%{transform:translate(7px,-6px)}66%{transform:translate(-6px,-9px)}}
+@keyframes drift2{0%,100%{transform:translate(0,0)}33%{transform:translate(-7px,-5px)}66%{transform:translate(6px,-9px)}}
+.bubble{position:relative;isolation:isolate;margin-inline:24px;display:grid;gap:10px;padding:30px 30px 26px;color:var(--cloud-ink);
+  transition:transform .2s ease-in}
+.bubble.turn{transform:rotateY(90deg)}
+li.lit .puffs{filter:drop-shadow(0 0 14px var(--thread))}
+.puffs{position:absolute;inset:0;z-index:-1;filter:drop-shadow(0 10px 18px var(--haze))}
+.puffs span{position:absolute;background:var(--cloud);border-radius:50%}
+.puffs .core{inset:0;border-radius:36px}
+.meta{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--cloud-muted);letter-spacing:.04em}
+.dot{width:9px;height:9px;border-radius:50%;background:var(--glow);box-shadow:0 0 8px var(--glow);flex:none}
+.via{border:1px solid currentColor;border-radius:999px;padding:0 8px;opacity:.85}
+.text{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font-size:19px}
+.backlabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cloud-muted)}
+.reflect{white-space:pre-wrap;overflow-wrap:anywhere;margin:0;font-size:17px;font-style:italic}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.act{background:transparent;color:var(--cloud-muted);border:1px solid transparent;padding:4px 10px;font-size:12px}
+.act:hover{border-color:currentColor}
+.act.strong{color:var(--accent)}
+.act.danger{color:var(--danger)}
+.confirm{font-size:15px;color:var(--danger)}
+.bubble textarea{background:rgba(127,127,127,.08);border-color:rgba(127,127,127,.3)}
+
+.empty{padding-block:30px;color:var(--muted)}
+.empty h2{font-family:var(--display);font-weight:400;color:var(--ink);font-size:26px;margin:0 0 6px}
+.note{font-size:15px;color:var(--muted);text-align:center}
+
+.tonight{position:fixed;inset:0;z-index:20;display:grid;place-items:center;padding:24px 18px;
+  padding-top:calc(24px + env(safe-area-inset-top,0px));padding-bottom:calc(24px + env(safe-area-inset-bottom,0px));
+  background:radial-gradient(ellipse at 50% 30%,#2a2152,#07071a 75%);color:#f1ecfa;overflow-y:auto}
+.tonight canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.tonight-inner{position:relative;max-width:560px;width:100%;display:grid;gap:22px;justify-items:center;text-align:center}
+.tonight .eyebrow{color:#cfc6e8}
+.tonight .bigcloud{position:relative;isolation:isolate;width:calc(100% - 48px);padding:40px 34px;color:#2b2140;animation:drift 9s ease-in-out infinite}
+.tonight .bigcloud .puffs span{background:#fbf7ff}
+.tonight .bigcloud .puffs{filter:drop-shadow(0 0 30px rgba(242,201,122,.35))}
+.tonight .bigtext{font-size:clamp(20px,4.6vw,25px);line-height:1.5;margin:0;white-space:pre-wrap;overflow-wrap:anywhere}
+.tonight .row{justify-content:center}
+.tonight button{background:#f2c97a;border-color:#f2c97a;color:#1a1530}
+.tonight button.ghost{background:transparent;color:#f1ecfa;border-color:rgba(241,236,250,.4)}
+
+/* tabs */
+.tabs{display:flex;gap:4px;margin:0 0 22px;padding:4px;border-radius:999px;background:var(--field);border:1px solid var(--line);width:100%;box-sizing:border-box;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{background:transparent;border-color:transparent;color:var(--ink);padding:8px 12px;font-size:13px;white-space:nowrap;flex:none}
+.tab[aria-pressed="true"]{background:var(--ink);color:var(--sky-top)}
+
+/* tarot table: a fixed velvet-night look, by design */
+.table{--velvet:#17112c;--velvet2:#241a45;--gold:#e2bc6e;--gold2:#f5dca3;--parch:#fbf5e6;--parchInk:#2a2140;--parchMuted:#6f6383;
+  background:radial-gradient(ellipse at 50% 0%,var(--velvet2),var(--velvet) 70%);color:#efe8fb;border:1px solid rgba(226,188,110,.35);
+  border-radius:20px;padding:22px 18px 26px;display:grid;gap:18px;box-shadow:0 18px 40px var(--haze)}
+.table .chip{color:#efe8fb;border-color:rgba(239,232,251,.3)}
+.table .chip[aria-pressed="true"]{background:var(--gold);color:var(--velvet);border-color:var(--gold)}
+.deckrow{display:flex;gap:22px;align-items:center;flex-wrap:wrap}
+.stack{position:relative;width:86px;height:128px;flex:none}
+.stack span{position:absolute;inset:0;border-radius:10px;border:1.5px solid var(--gold);
+  background:radial-gradient(circle at 50% 42%,var(--gold2) 0 7px,transparent 8px),radial-gradient(circle at 50% 42%,transparent 0 15px,rgba(226,188,110,.5) 16px 17px,transparent 18px),
+  repeating-linear-gradient(45deg,rgba(226,188,110,.09) 0 2px,transparent 2px 9px),var(--velvet2);box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.stack span:nth-child(1){transform:translate(-6px,6px) rotate(-4deg)}
+.stack span:nth-child(2){transform:translate(-3px,3px) rotate(-2deg)}
+.stack span:nth-child(3){transform:translate(0,0)}
+.stack span:nth-child(4){transform:translate(3px,-3px) rotate(2deg)}
+.stack.shuffling span:nth-child(odd){animation:riffleL .9s ease-in-out}
+.stack.shuffling span:nth-child(even){animation:riffleR .9s ease-in-out}
+@keyframes riffleL{0%,100%{}30%{transform:translate(-46px,-4px) rotate(-14deg)}60%{transform:translate(12px,2px) rotate(6deg)}}
+@keyframes riffleR{0%,100%{}30%{transform:translate(46px,-6px) rotate(14deg)}60%{transform:translate(-12px,0) rotate(-6deg)}}
+.deckinfo{display:grid;gap:6px;min-width:0}
+.deckname{font-family:var(--display);font-size:24px;line-height:1.1}
+.deckcount{font-family:var(--mono);font-size:12px;color:#cbbfe4;font-variant-numeric:tabular-nums}
+.table button.gold{background:var(--gold);border-color:var(--gold);color:var(--velvet)}
+.table button.ghostgold{background:transparent;border-color:rgba(226,188,110,.55);color:var(--gold)}
+.pullrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.mixrow{display:grid;gap:8px}
+.mixdecks{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.mixdeck{position:relative;background:none;border:0;padding:0;color:#f5dca3;cursor:pointer;display:grid;justify-items:center;gap:6px;font:inherit}
+.mixdeck:hover{filter:brightness(1.12)}
+.mixdeck:disabled{opacity:.4;cursor:default}
+.mstack{position:relative;width:100%;max-width:120px;aspect-ratio:2/3}
+.mstack i{position:absolute;inset:0;border-radius:10px;border:1.5px solid var(--gold);background:radial-gradient(circle at 50% 42%,transparent 0 22px,rgba(226,188,110,.45) 23px 24px,transparent 25px),repeating-linear-gradient(45deg,rgba(226,188,110,.09) 0 2px,transparent 2px 9px),var(--velvet2);box-shadow:0 4px 10px rgba(0,0,0,.35)}
+.mstack i:nth-child(1){transform:translate(-4px,4px) rotate(-3deg)}
+.mstack i:nth-child(2){transform:translate(-2px,2px) rotate(-1deg)}
+.mixdeck[data-d="clear"] .mstack i{background:radial-gradient(circle at 50% 42%,transparent 0 22px,rgba(245,220,163,.5) 23px 24px,transparent 25px),linear-gradient(180deg,#2b3f6b,#4a3d7a)}
+.mixdeck.tap .mstack i:nth-child(3){animation:lift .35s ease-out}
+@keyframes lift{50%{transform:translateY(-10px) rotate(2deg)}}
+.mtitle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:86%;text-align:center;font-family:var(--display);font-size:15px;line-height:1.15;color:#f5dca3;text-shadow:0 1px 6px rgba(0,0,0,.8);pointer-events:none}
+.mleft{font-family:var(--mono);font-size:11px;color:#cbbfe4;font-variant-numeric:tabular-nums}
+.spread.mixed{grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:14px}
+.tcard.mini .tface{min-height:0;aspect-ratio:2/3;padding:10px 8px}
+.tcard.mini .tfront{justify-content:center;gap:6px}
+.tcard.mini .tname{font-size:15px}
+.tcard.mini .tnum{font-size:9px;padding-top:0}
+.tcard.mini .temblem{width:36px;height:36px;margin:0 auto}
+.tcard.mini .tback .tapme{display:none}
+.tcard.mini.isrev .tinner{transform:rotate(180deg)}
+.tcard.mini.isrev.open .tinner{transform:rotate(180deg) rotateY(180deg)}
+.slotlabel.rev{color:#e98a9c}
+.zoomview{box-sizing:border-box}
+.zoomview .zoominner{position:relative;max-width:440px;width:100%;box-sizing:border-box;padding:0 4px;display:grid;gap:16px;justify-items:center}
+.zoomstack{position:relative;width:100%;padding:0 12px 14px 0;box-sizing:border-box}
+.zoomghost{position:absolute;top:0;left:0;right:12px;bottom:14px;border-radius:18px;background:#efe6cf;border:2px solid rgba(226,188,110,.7);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.zoomghost.g1{transform:translate(6px,7px) rotate(1.2deg)}
+.zoomghost.g2{transform:translate(12px,14px) rotate(2.4deg);background:#e3d8bd}
+.zoomcount{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#e2bc6e}
+.zoomnav{display:flex;gap:12px;align-items:center;justify-content:center}
+.znav{font-size:24px;line-height:1;padding:6px 16px;color:#f1ecfa;border-color:rgba(241,236,250,.4)}
+.znav:disabled{opacity:.3}
+.zoomhint{margin:0;font-size:13px;font-style:italic;color:#cfc6e8}
+.zoomcard{position:relative;touch-action:pan-y;user-select:none;-webkit-user-select:none;width:100%;box-sizing:border-box;background:#fbf5e6;color:#2a2140;border:2px solid #e2bc6e;border-radius:18px;padding:24px 22px;display:flex;flex-direction:column;gap:10px;text-align:center;box-shadow:inset 0 0 0 6px #fbf5e6,inset 0 0 0 7px rgba(226,188,110,.6),0 20px 50px rgba(0,0,0,.5);animation:zoomin .25s ease-out}
+.zoomcard.clearsky{background:linear-gradient(180deg,#eef5fd,#fbf9f2)}
+.zoomcard .temblem{width:72px;height:72px}
+.zoomcard.reversed .temblem{transform:rotate(180deg)}
+.zoomcard .tname{font-size:28px}
+.zoomcard .tmeaning{font-size:18px}
+@keyframes zoomin{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion: reduce){.zoomcard,.mixdeck.tap .mstack i{animation:none}}
+.mixstep{display:grid;grid-template-columns:1fr 36px 28px 36px;gap:8px;align-items:center;font-size:15px}
+.mixstep .mixbtn{padding:4px 0;font-size:16px}
+.mixn{text-align:center;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.pulllabel{font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:#cbbfe4;margin-right:4px}
+.tarothint{margin:0;font-size:15px;font-style:italic;color:#cbbfe4}
+.spread{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:18px;align-items:start}
+.slot{display:grid;gap:8px;justify-items:center;animation:deal .5s ease-out both}
+@keyframes deal{from{opacity:0;transform:translateY(-24px) scale(.94)}to{opacity:1;transform:none}}
+.slotlabel{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.tcard{width:100%;max-width:280px;perspective:1100px;cursor:pointer;background:none;border:0;padding:0;border-radius:14px;color:inherit;font:inherit;text-align:center}
+.tcard:hover{filter:none}
+.tinner{display:grid;transition:transform .7s cubic-bezier(.3,.7,.3,1);transform-style:preserve-3d}
+.tcard.open .tinner{transform:rotateY(180deg)}
+.tface{grid-area:1/1;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;min-height:340px;box-sizing:border-box}
+.tback{border:2px solid var(--gold);display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 46%,var(--gold2) 0 14px,transparent 15px),radial-gradient(circle at 50% 46%,transparent 0 30px,rgba(226,188,110,.55) 31px 32px,transparent 33px),
+  radial-gradient(circle at 50% 46%,transparent 0 52px,rgba(226,188,110,.3) 53px 54px,transparent 55px),repeating-linear-gradient(45deg,rgba(226,188,110,.08) 0 2px,transparent 2px 11px),var(--velvet2);
+  box-shadow:0 10px 24px rgba(0,0,0,.4)}
+.tback .tapme{align-self:end;margin-bottom:18px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.tfront{transform:rotateY(180deg);background:var(--parch);color:var(--parchInk);border:2px solid var(--gold);padding:20px 18px 18px;display:flex;flex-direction:column;gap:10px;
+  box-shadow:inset 0 0 0 6px var(--parch),inset 0 0 0 7px rgba(226,188,110,.6),0 10px 24px rgba(0,0,0,.4)}
+.tnum{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--parchMuted);text-transform:uppercase;padding-top:6px}
+.tname{font-family:var(--display);font-size:24px;line-height:1.1;text-wrap:balance}
+.trule{width:40px;height:1px;background:var(--gold);margin:2px auto}
+.tmeaning{margin:0;font-size:16px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.trefl{margin:0;font-size:14px;line-height:1.5;font-style:italic;color:var(--parchMuted);text-align:left}
+.trefbtn{align-self:center;margin-top:auto;background:transparent;border-color:rgba(42,33,64,.25);color:var(--parchInk);font-size:11px;padding:5px 12px}
+.deckabout{font-size:14px;font-style:italic;color:#cbbfe4;max-width:40ch}
+.revtag{align-self:center;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#a3485c;border:1px solid rgba(163,72,92,.45);border-radius:999px;padding:1px 10px}
+.tfront.reversed .temblem{transform:rotate(180deg)}
+.tupright{margin:0;font-size:13px;line-height:1.45;color:var(--parchMuted)}
+.tupright b{font-family:var(--mono);font-weight:500;font-size:10px;letter-spacing:.12em;text-transform:uppercase;display:block}
+.tfront.clearsky{background:linear-gradient(180deg,#eef5fd,#fbf9f2)}
+.csmanage{display:grid;gap:12px;margin-top:22px}
+.cshint{margin:0;color:var(--muted);font-style:italic;font-size:15px}
+.csform{display:grid;gap:8px;background:var(--field);border:1px solid var(--line);border-radius:14px;padding:14px}
+.csform input,.rcard input,.rcard textarea{font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:10px;padding:8px 12px;width:100%;box-sizing:border-box}
+.csform textarea{min-height:80px}
+.csname{font-family:var(--display);font-size:19px}
+.emptyspread{grid-column:1/-1;text-align:center;color:#cbbfe4;font-style:italic;padding:20px 0}
+@media (prefers-reduced-motion: reduce){.tinner{transition:none}.slot,.stack.shuffling span{animation:none!important}}
+
+/* dream journal: moonlit notebook pages */
+.journal{--page:#f7f3fb;--pageInk:#251d38;--pageMuted:#6c6282;--rule:rgba(90,70,150,.13);--ink2:#5b46a8;--gold:#c9952f;display:grid;gap:18px}
+.jform{background:var(--page);color:var(--pageInk);border-radius:18px;padding:20px 20px 18px;display:grid;gap:12px;box-shadow:0 14px 34px var(--haze);
+  background-image:repeating-linear-gradient(transparent 0 31px,var(--rule) 31px 32px);background-position:0 18px}
+.jhead{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.jlabel{color:var(--pageMuted)}
+.jdate{font-family:var(--mono);font-size:12px;color:var(--pageMuted);display:flex;gap:8px;align-items:center}
+.jdate input{font:inherit;font-size:13px;color:var(--pageInk);background:transparent;border:1px solid var(--rule);border-radius:8px;padding:4px 8px;color-scheme:light}
+.jtitle{font-family:var(--display);font-size:24px;color:var(--pageInk);background:transparent;border:0;border-bottom:1px solid var(--rule);padding:4px 0;width:100%;box-sizing:border-box}
+.jtitle::placeholder,.jtext::placeholder{color:var(--pageMuted);opacity:.8}
+.jform .jtext{min-height:170px;background:transparent;border:0;padding:0;line-height:32px;font-size:18px;color:var(--pageInk);resize:vertical}
+.jform .jmine{min-height:96px}
+.jsection{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink2);margin-top:6px}
+.jminebody{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:17px;line-height:1.6;padding:10px 14px;border-radius:10px;background:rgba(90,70,150,.07)}
+.jtags,.jcardtags{display:flex;gap:6px;flex-wrap:wrap}
+.jtag{background:transparent;color:var(--pageMuted);border:1px solid var(--rule);padding:5px 12px;font-size:12px}
+.jtag[aria-pressed="true"]{background:var(--ink2);border-color:var(--ink2);color:var(--page)}
+.jform button[type=submit]{background:var(--ink2);border-color:var(--ink2);color:var(--page)}
+.jhint{color:var(--pageMuted)}
+.jsearch{width:100%;box-sizing:border-box;font:inherit;font-size:16px;color:var(--ink);background:var(--field);border:1px solid var(--line);border-radius:999px;padding:8px 16px}
+.jsearch::placeholder{color:var(--muted)}
+.jlist{display:grid;gap:14px}
+.jmonth{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:8px}
+.jcard{background:var(--page);color:var(--pageInk);border-radius:16px;padding:18px 20px;display:grid;gap:8px;box-shadow:0 8px 22px var(--haze);border-left:4px solid var(--ink2)}
+.jcard.nightmare{border-left-color:#7a2f45}.jcard.lucid{border-left-color:var(--gold)}
+.jmeta{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap;font-family:var(--mono);font-size:12px;color:var(--pageMuted)}
+.jctitle{font-family:var(--display);font-size:22px;line-height:1.15;margin:0}
+.jbody{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:17px;line-height:1.6}
+.jbody.clamp{display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden}
+.jchip{font-family:var(--mono);font-size:11px;border:1px solid var(--rule);border-radius:999px;padding:1px 9px;color:var(--pageMuted)}
+.jrefl{margin:0;padding-left:12px;border-left:2px solid var(--rule);font-style:italic;font-size:15px;color:var(--pageMuted);white-space:pre-wrap}
+.jcard .act{color:var(--pageMuted)}.jcard .act.strong{color:var(--ink2)}.jcard .act.danger{color:#a33a4a}
+.jcard textarea,.jcard input{color:var(--pageInk);background:rgba(90,70,150,.05);border:1px solid var(--rule);border-radius:10px;font:inherit;padding:8px 10px;width:100%;box-sizing:border-box}
+.jempty{text-align:center;color:var(--muted);font-style:italic}
+
+/* star map: always a night panel, by design */
+.viewswitch{display:flex;gap:4px;padding:4px;border-radius:999px;background:var(--field);border:1px solid var(--line);width:max-content;margin:22px 0 4px}
+.vbtn{background:transparent;border-color:transparent;color:var(--ink);padding:6px 18px;font-size:12px}
+.vbtn[aria-pressed="true"]{background:var(--ink);color:var(--sky-top)}
+.starmap{margin-top:14px;border-radius:20px;overflow:hidden;background:radial-gradient(ellipse at 50% 20%,#231c45,#07071a 75%);border:1px solid rgba(242,201,122,.25);box-shadow:0 18px 40px var(--haze)}
+.starmap svg{display:block;width:100%;height:auto}
+.maphint{margin:0;padding:10px 16px 14px;font-size:13px;color:#cfc6e8;font-style:italic;text-align:center}
+.mapline{stroke:#f2c97a;stroke-width:1.6;stroke-dasharray:2 7;stroke-linecap:round;opacity:.6;fill:none}
+.maplabel{fill:#f2c97a;font-family:"IBM Plex Mono",ui-monospace,monospace;font-size:20px;letter-spacing:2px;text-transform:uppercase;opacity:.85}
+.mapstar{cursor:pointer}
+.mapstar .core{fill:#fff4d8}
+.mapstar .halo{fill:#f2c97a;opacity:.18}
+.mapstar.bridge .core{fill:#ffe9a8}.mapstar.bridge .halo{opacity:.35}
+.mapstar .tw{transform-box:fill-box;transform-origin:center;animation:twinkle 3.6s ease-in-out infinite}
+@keyframes twinkle{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.8)}}
+.mapstar:focus{outline:none}.mapstar:focus-visible .halo{opacity:.6}
+.mapstar .hit{fill:transparent}
+.maptiny{fill:#fff4d8}
+.starpop .popname{font-family:var(--display);font-size:24px;margin-bottom:8px}
+.starpop .poprefl{font-size:15px;font-style:italic;color:#5d4f73;margin:12px 0 0;white-space:pre-wrap}
+@media (prefers-reduced-motion: reduce){.mapstar .tw{animation:none}}
+
+.barx{background:transparent;border:0;color:var(--ink);font-size:18px;line-height:1;padding:4px 10px;border-radius:999px;flex:none}
+.barx:hover{background:var(--line)}
+/* settings */
+.tab.gear{margin-left:auto;padding:6px 10px;font-size:17px;line-height:1}
+.settings{position:fixed;inset:0;z-index:25;background:rgba(5,4,15,.6);display:grid;place-items:start center;overflow-y:auto;
+  padding:calc(20px + env(safe-area-inset-top,0px)) 16px calc(20px + env(safe-area-inset-bottom,0px))}
+.settings[hidden]{display:none}
+.setpanel{width:100%;max-width:560px;background:#16122a;color:#efe8fb;border:1px solid rgba(226,188,110,.35);border-radius:20px;padding:20px 18px;display:grid;gap:18px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.sethead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sethead h2{font-family:var(--display);font-weight:400;font-size:28px;margin:0}
+.setsec{display:grid;gap:8px;border-top:1px solid rgba(226,188,110,.2);padding-top:14px}
+.setsec h3{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#e2bc6e;margin:0;font-weight:500}
+.setlbl{font-size:14px;color:#cbbfe4;margin-top:4px}
+.setnote{margin:0;font-size:13px;color:#a99fc4;font-style:italic}
+.setrow{display:flex;gap:8px;flex-wrap:wrap}
+.setrow input{flex:1;min-width:0}
+.setpanel input[type=text],.setpanel input[type=password],.setpanel select{font:inherit;font-size:16px;color:#efe8fb;background:rgba(255,255,255,.06);border:1px solid rgba(226,188,110,.3);border-radius:10px;padding:8px 12px;width:100%;box-sizing:border-box;color-scheme:dark}
+.setpanel input:disabled{opacity:.5}
+.setpanel button.ghost{background:transparent;color:#efe8fb;border-color:rgba(239,232,251,.35)}
+.setcheck{display:flex;gap:10px;align-items:flex-start;font-size:15px;cursor:pointer}
+.setcheck input{margin-top:4px;accent-color:#e2bc6e}
+.setpanel input[type=range]{width:100%;accent-color:#e2bc6e}
+.aibox{display:grid;gap:8px;background:rgba(255,255,255,.04);border:1px solid rgba(226,188,110,.25);border-radius:14px;padding:14px 16px}
+.aitext{white-space:pre-wrap;overflow-wrap:anywhere;font-size:17px;line-height:1.65;color:#f3ecfc}
+.aitext.thinking{font-style:italic;color:#cbbfe4}
+.raitext{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:15px;line-height:1.6}
+.calm .floater,.calm .mapstar .tw,.calm .tonight .bigcloud,.calm .shoot.go{animation:none!important}
+
+/* upgrades */
+.moonbtn canvas.orb{width:22px;height:22px;border-radius:50%;background:none;box-shadow:0 0 14px var(--glow)}
+.shoot{position:absolute;top:18%;left:-20%;width:140px;height:2px;border-radius:2px;opacity:0;pointer-events:none;
+  background:linear-gradient(90deg,transparent,var(--star));box-shadow:0 0 8px var(--star);transform:rotate(14deg)}
+.shoot.go{animation:shoot 1.4s ease-out}
+@keyframes shoot{0%{opacity:0;transform:translate(0,0) rotate(14deg)}10%{opacity:1}100%{opacity:0;transform:translate(115vw,26vh) rotate(14deg)}}
+.dreamlink{background:transparent;border:1px dashed currentColor;color:var(--cloud-muted);padding:2px 10px;font-size:11px}
+.editgrid{display:grid;gap:8px}
+.editgrid input{font:inherit;font-size:15px;color:inherit;background:rgba(127,127,127,.08);border:1px solid rgba(127,127,127,.3);border-radius:10px;padding:8px 10px;width:100%;box-sizing:border-box}
+.editlabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--cloud-muted)}
+.constpick{display:flex;flex-wrap:wrap;gap:6px}
+.constpick label{display:flex;gap:6px;align-items:center;font-size:13px;font-family:var(--mono);border:1px solid rgba(127,127,127,.3);border-radius:999px;padding:3px 10px;cursor:pointer}
+.temblem{width:56px;height:56px;margin:6px auto 0;display:block;color:#b88a2c}
+.temblem *{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.savereading{display:grid;gap:8px;border-top:1px solid rgba(226,188,110,.25);padding-top:16px}
+.savereading textarea{background:rgba(255,255,255,.06);border-color:rgba(226,188,110,.3);color:#efe8fb;min-height:80px}
+.readings{display:grid;gap:12px;margin-top:22px}
+.readhead{font-family:var(--display);font-weight:400;font-size:26px;margin:0;color:var(--ink)}
+.frequent{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.freqlabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-right:4px}
+.freqchip{font-family:var(--mono);font-size:12px;border:1px solid var(--line);border-radius:999px;padding:2px 10px;color:var(--ink)}
+.readlist{display:grid;gap:10px}
+.rcard{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:grid;gap:8px;color:var(--ink)}
+.rmeta{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.rcards{display:flex;flex-wrap:wrap;gap:6px}
+.rpill{font-size:14px;border:1px solid var(--line);border-radius:10px;padding:4px 10px}
+.rpill small{display:block;font-family:var(--mono);font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.rnotes{margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-style:italic}
+.rcard .act{color:var(--muted)}.rcard .act.danger{color:var(--danger)}
+.patterns{background:var(--field);border:1px solid var(--line);border-radius:14px;padding:12px 16px;color:var(--ink)}
+.patterns summary{cursor:pointer;font-family:var(--mono);font-size:13px;letter-spacing:.08em;text-transform:uppercase}
+.patbody{display:grid;gap:10px;margin-top:12px}
+.patlabel{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.patbars{display:grid;gap:6px}
+.patrow{display:grid;grid-template-columns:90px 1fr 28px;gap:10px;align-items:center;font-size:14px}
+.pattrack{height:8px;border-radius:999px;background:var(--line);overflow:hidden}
+.patfill{height:100%;border-radius:999px;background:var(--glow)}
+.patn{font-family:var(--mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.patwords{display:flex;flex-wrap:wrap;gap:6px}
+.pathint{margin:0;font-size:13px;color:var(--muted);font-style:italic}
+.borndreams{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.bornchip{background:transparent;border:1px solid var(--rule);color:var(--ink2);font-size:12px;padding:3px 10px}
+.foot{display:grid;justify-items:center;gap:6px;margin-top:56px;text-align:center}
+.backupbtn{background:transparent;color:var(--ink);border-color:var(--line)}
+.foothint{margin:0;font-size:13px;color:var(--muted);max-width:52ch}
+.footbtns{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.importlbl{display:inline-flex;align-items:center;font-family:var(--mono);font-size:13px;cursor:pointer;border-radius:999px;padding:8px 16px;border:1px solid var(--line);color:var(--ink)}
+.importbox{display:grid;gap:10px;justify-items:center;background:var(--field);border:1px solid var(--line);border-radius:14px;padding:14px 18px;color:var(--ink)}
+.importbox p{margin:0;font-size:15px}
+.offlinebar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:12px;padding:6px 6px 6px 14px;border-radius:999px;background:var(--field);border:1px solid var(--line);font-family:var(--mono);font-size:12px;color:var(--ink);text-align:center}
+li.lesson.flash .puffs{filter:drop-shadow(0 0 22px var(--glow))}
+@media (prefers-reduced-motion: reduce){.shoot.go{animation:none}}
+
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--sky-top);font-family:var(--mono);font-size:13px;padding:8px 16px;border-radius:999px}
+@media (prefers-reduced-motion: reduce){.floater,.tonight .bigcloud{animation:none!important}.bubble{transition:none}}
+</style>
+
+<div class="skybg" aria-hidden="true"></div>
+<main class="wrap">
+  <div class="offlinebar" id="offlineBar" hidden><span>Your words are saved on this device only. Back up now and then.</span><button type="button" class="barx" id="offlineX" aria-label="Dismiss">×</button></div>
+  <header class="top">
+    <canvas id="stars" aria-hidden="true"></canvas>
+    <div class="shoot" id="shoot" aria-hidden="true"></div>
+    <div class="top-inner">
+      <div class="eyebrow" id="phaseLabel">Waking life → the other realms</div>
+      <h1>Dream Board</h1>
+      <p class="sub">The lessons I’ve learned in my physical reality, in my own words, carried with me into my non-waking life.</p>
+      <div class="toprow">
+        <button class="moonbtn" id="moonBtn" type="button"><canvas class="orb" id="moonOrb" width="44" height="44" aria-hidden="true"></canvas>A lesson for tonight</button>
+        <span class="count" id="count">Opening the sky…</span>
+        <span class="count" id="moonPhase"></span>
+      </div>
+    </div>
+  </header>
+
+  <nav class="tabs" aria-label="Sections">
+    <button type="button" class="tab" id="tabSky" aria-pressed="true">The sky</button>
+    <button type="button" class="tab" id="tabTarot" aria-pressed="false">Tarot</button>
+    <button type="button" class="tab" id="tabJournal" aria-pressed="false">Dream journal</button>
+    <button type="button" class="tab gear" id="openSettings" aria-label="Settings" title="Settings">⚙︎</button>
+  </nav>
+
+  <section id="journalView" hidden>
+    <div class="journal">
+      <form class="jform" id="jForm">
+        <div class="jhead">
+          <div class="eyebrow jlabel">Log a dream</div>
+          <label class="jdate">Night of <input type="date" id="jDate"></label>
+        </div>
+        <input type="text" id="jTitle" class="jtitle" placeholder="Give it a title (optional)" aria-label="Dream title">
+        <textarea id="jText" class="jtext" placeholder="Write it down before it fades. Every detail you remember." aria-label="The dream"></textarea>
+        <div class="eyebrow jlabel">My reflection</div>
+        <textarea id="jMine" class="jtext jmine" placeholder="What do you make of it? (optional, add it now or later)" aria-label="My reflection on the dream"></textarea>
+        <div class="jtags" id="jTags" role="group" aria-label="Kind of dream"></div>
+        <div class="row">
+          <p class="hint jhint">Saved word for word.</p>
+          <button type="submit" id="jSave">Save dream</button>
+        </div>
+      </form>
+      <input id="jSearch" class="jsearch" type="search" placeholder="Search my dreams" aria-label="Search dreams">
+      <details class="patterns" id="patterns">
+        <summary>Dream patterns</summary>
+        <div class="patbody">
+          <div class="patlabel">Kinds of dreams</div>
+          <div class="patbars" id="patTags"></div>
+          <div class="patlabel">Words that keep returning</div>
+          <div class="patwords" id="patWords"></div>
+          <p class="pathint">Patterns grow clearer as you log more dreams.</p>
+        </div>
+      </details>
+      <div id="jList" class="jlist"></div>
+      <p class="jempty" id="jEmpty" hidden>No dreams logged yet. The next one you remember can be the first.</p>
+    </div>
+  </section>
+
+  <section id="tarotView" hidden>
+    <div class="table">
+      <div class="deckpick chips" role="group" aria-label="Deck">
+        <button class="chip" type="button" data-deck="mine" aria-pressed="true">Lesson deck</button>
+        <button class="chip" type="button" data-deck="clear" aria-pressed="false">Clear Skies</button>
+        <button class="chip" type="button" data-deck="trad" aria-pressed="false">Traditional tarot</button>
+        <button class="chip" type="button" data-deck="mix" aria-pressed="false">Mixed spread</button>
+      </div>
+      <div class="deckrow">
+        <div class="stack" id="stack" aria-hidden="true"><span></span><span></span><span></span><span></span></div>
+        <div class="deckinfo">
+          <div class="deckname" id="deckName">Lesson deck</div>
+          <div class="deckabout" id="deckAbout"></div>
+          <div class="deckcount" id="deckCount"></div>
+          <div class="row">
+            <button type="button" class="gold" id="shuffleBtn">Shuffle</button>
+            <button type="button" class="ghostgold" id="resetBtn">Return all cards</button>
+          </div>
+        </div>
+      </div>
+      <div class="mixrow" id="mixRow" hidden>
+        <div class="mixdecks">
+          <button type="button" class="mixdeck" data-d="mine"><span class="mstack"><i></i><i></i><i></i><span class="mtitle">Lesson deck</span></span><span class="mleft"></span></button>
+          <button type="button" class="mixdeck" data-d="clear"><span class="mstack"><i></i><i></i><i></i><span class="mtitle">Clear Skies</span></span><span class="mleft"></span></button>
+          <button type="button" class="mixdeck" data-d="trad"><span class="mstack"><i></i><i></i><i></i><span class="mtitle">Traditional tarot</span></span><span class="mleft"></span></button>
+        </div>
+      </div>
+      <div class="pullrow" id="pullRow" role="group" aria-label="Pull cards">
+        <span class="pulllabel">Pull</span>
+        <button type="button" class="gold pull" data-n="1">1 card</button>
+        <button type="button" class="gold pull" data-n="2">2 cards</button>
+        <button type="button" class="gold pull" data-n="3">3 cards</button>
+      </div>
+      <p class="tarothint" id="tarotHint">Shuffle if you like, then pull. Tap a card to turn it over.</p>
+      <div class="spread" id="spread"></div>
+      <div class="savereading" id="saveReading" hidden>
+        <label class="pulllabel" for="readingNotes">What this reading means to me</label>
+        <textarea id="readingNotes" placeholder="Optional. Your own words about this pull."></textarea>
+        <div class="aibox" id="aiBox" hidden>
+          <div class="pulllabel" id="aiLabel">The reading</div>
+          <div class="aitext" id="aiText"></div>
+        </div>
+        <div class="row">
+          <button type="button" class="ghostgold" id="aiBtn">Read my spread</button>
+          <button type="button" class="ghostgold" id="aiStop" hidden>Stop</button>
+          <button type="button" class="gold" id="saveReadingBtn">Save this reading</button>
+        </div>
+      </div>
+    </div>
+    <div class="csmanage" id="csManage" hidden>
+      <h2 class="readhead">Add a Clear Skies card</h2>
+      <p class="cshint">Add a new reminder here. Your cards stay sealed until you pull them. To change or remove one, just tell Claude.</p>
+      <div class="csform">
+        <input type="text" id="csName" placeholder="Card name (optional)" aria-label="Card name">
+        <textarea id="csText" placeholder="A reminder to yourself" aria-label="Reminder"></textarea>
+        <div class="row"><button type="button" id="csAdd">Add to Clear Skies</button></div>
+      </div>
+    </div>
+    <div class="readings">
+      <h2 class="readhead">Reading log</h2>
+      <div class="frequent" id="frequent"></div>
+      <div id="readingList" class="readlist"></div>
+      <p class="jempty" id="readEmpty">No saved readings yet. After a pull, tap “Save this reading.”</p>
+    </div>
+  </section>
+
+  <div id="skyView">
+  <details class="write" id="writeBox">
+    <summary>Add a lesson</summary>
+    <div class="writebody">
+      <textarea id="newText" placeholder="Write it exactly the way it came to you." aria-label="A lesson I learned"></textarea>
+      <div class="row">
+        <p class="hint">Saved word for word. Nothing gets changed.</p>
+        <button id="addBtn" type="button">Add to the sky</button>
+      </div>
+    </div>
+  </details>
+
+  <div class="viewswitch" role="group" aria-label="Sky view">
+    <button type="button" class="vbtn" id="vClouds" aria-pressed="true">Clouds</button>
+    <button type="button" class="vbtn" id="vStars" aria-pressed="false">Stars</button>
+  </div>
+
+  <div class="starmap" id="starMap" hidden>
+    <svg id="mapSvg" role="img" aria-label="Star map of your lessons, grouped into constellations"></svg>
+    <p class="maphint">Each star is a lesson. Tap one to read it. Brighter stars belong to more than one constellation.</p>
+  </div>
+
+  <div class="controls" id="cloudControls">
+    <div class="chips" role="group" aria-label="Show">
+      <button class="chip" type="button" data-f="all" aria-pressed="true">All</button>
+      <button class="chip" type="button" data-f="typed" aria-pressed="false">Written by me</button>
+      <button class="chip" type="button" data-f="chat" aria-pressed="false">Told to Claude</button>
+      <button class="chip" type="button" data-f="claude" aria-pressed="false">Interpreted by Claude</button>
+    </div>
+    <input id="search" type="search" placeholder="Search the sky" aria-label="Search lessons">
+  </div>
+
+  <div class="constbar" id="constBar" hidden>
+    <div class="eyebrow">Constellation</div>
+    <div class="title" id="constTitle"></div>
+    <div class="row" id="constChips"></div>
+  </div>
+
+  <div class="listwrap" id="listWrap">
+    <svg class="threads" id="threads" aria-hidden="true"></svg>
+    <ol class="lessons" id="list"></ol>
+  </div>
+  <div class="empty" id="empty" hidden>
+    <h2>The sky is still clear.</h2>
+    <p>Your first lesson will appear here. Add it above, or tell Claude in the chat.</p>
+  </div>
+  </div>
+  <footer class="foot">
+    <div class="eyebrow">Keep your words safe</div>
+    <div class="footbtns">
+      <button type="button" class="backupbtn" id="backupJsonBtn">Save a backup</button>
+      <button type="button" class="backupbtn" id="backupBtn">Save a readable copy</button>
+      <button type="button" class="backupbtn" id="offlineBtn">Download offline copy</button>
+      <label class="backupbtn importlbl" for="importFile">Import a backup</label>
+      <input type="file" id="importFile" accept=".json,application/json" hidden>
+    </div>
+    <p class="foothint">A backup can be imported to restore everything. A readable copy is plain text. The offline copy is a full Dream Board file with all your data inside, that opens anywhere.</p>
+    <div class="importbox" id="importBox" hidden>
+      <p id="importSummary"></p>
+      <div class="row"><button type="button" id="importGo">Restore</button><button type="button" class="backupbtn" id="importCancel">Cancel</button></div>
+    </div>
+  </footer>
+</main>
+
+<div class="tonight" id="tonight" hidden role="dialog" aria-modal="true" aria-label="A lesson for tonight">
+  <canvas id="tonightStars" aria-hidden="true"></canvas>
+  <div class="tonight-inner">
+    <div class="eyebrow">Carry this into sleep</div>
+    <div class="bigcloud" id="bigCloud"><div class="puffs" data-seed="tonight"></div><p class="bigtext" id="bigText"></p></div>
+    <div class="row">
+      <button type="button" id="anotherBtn">Another one</button>
+      <button type="button" class="ghost" id="closeTonight">Close</button>
+    </div>
+  </div>
+</div>
+<div class="tonight starpop" id="starPop" hidden role="dialog" aria-modal="true" aria-label="Lesson">
+  <canvas id="popStars" aria-hidden="true"></canvas>
+  <div class="tonight-inner">
+    <div class="eyebrow" id="popConst"></div>
+    <div class="bigcloud" id="popCloud"><div class="puffs" data-seed="pop"></div><div class="popname" id="popName"></div><p class="bigtext" id="popText"></p><p class="poprefl" id="popRefl" hidden></p></div>
+    <div class="row">
+      <button type="button" id="popReflBtn">Claude’s reflection</button>
+      <button type="button" class="ghost" id="popCloudsBtn">Find it in the clouds</button>
+      <button type="button" class="ghost" id="popClose">Close</button>
+    </div>
+  </div>
+</div>
+<div class="tonight zoomview" id="zoomView" hidden role="dialog" aria-modal="true" aria-label="Card up close">
+  <div class="zoominner">
+    <div class="zoomcount" id="zoomCount"></div>
+    <div class="zoomstack" id="zoomStack"><div class="zoomghost g2"></div><div class="zoomghost g1"></div><div class="zoomcard" id="zoomCard"></div></div>
+    <div class="zoomnav">
+      <button type="button" class="ghost znav" id="zoomPrev" aria-label="Previous card">‹</button>
+      <button type="button" id="zoomClose">Close</button>
+      <button type="button" class="ghost znav" id="zoomNext" aria-label="Next card">›</button>
+    </div>
+    <p class="zoomhint" id="zoomHint">Swipe to move through your spread</p>
+  </div>
+</div>
+<div class="settings" id="settings" hidden role="dialog" aria-modal="true" aria-labelledby="setTitle">
+  <div class="setpanel">
+    <div class="sethead"><h2 id="setTitle">Settings</h2><button type="button" class="ghost setclose" id="closeSettings">Done</button></div>
+
+    <section class="setsec">
+      <h3>AI readings</h3>
+      <p class="setnote" id="aiWhere"></p>
+      <label class="setlbl" for="orKey">OpenRouter key</label>
+      <div class="setrow"><input type="password" id="orKey" autocomplete="off" spellcheck="false" placeholder="sk-or-…"><button type="button" class="ghost" id="orShow">Show</button></div>
+      <p class="setnote">Stored only on this device. Never included in backups or offline copies.</p>
+      <label class="setlbl" for="orModel">Model</label>
+      <select id="orModel">
+        <option value="~deepseek/deepseek-pro-latest">DeepSeek Pro (always the latest)</option>
+        <option value="~deepseek/deepseek-flash-latest">DeepSeek Flash (always the latest, faster and cheaper)</option>
+        <option value="deepseek/deepseek-v4.1-flash">DeepSeek V4.1 Flash</option>
+        <option value="deepseek/deepseek-v4-pro-0813">DeepSeek V4 Pro 0813</option>
+        <option value="custom">Other model (type its ID)</option>
+      </select>
+      <input type="text" id="orCustom" placeholder="e.g. deepseek/deepseek-v4-pro" spellcheck="false" hidden>
+      <div class="setrow"><button type="button" class="ghost" id="orTest">Test connection</button><button type="button" class="ghost" id="orClear">Remove key</button></div>
+      <p class="setnote" id="orStatus"></p>
+      <label class="setlbl" for="readLen">Reading length</label>
+      <select id="readLen"><option value="short">Short</option><option value="medium">Medium</option><option value="long">Long and detailed</option></select>
+      <label class="setlbl" for="readTone">Reading voice</label>
+      <select id="readTone"><option value="gentle">Gentle and warm</option><option value="direct">Direct and honest</option><option value="poetic">Poetic and mystical</option></select>
+      <label class="setcheck" id="allowClaudeRow"><input type="checkbox" id="allowClaude"> Let Claude write readings when I'm using the board inside Claude</label>
+    </section>
+
+    <section class="setsec">
+      <h3>Tarot</h3>
+      <label class="setcheck"><input type="checkbox" id="revOn"> Reversed cards in Traditional tarot</label>
+      <label class="setlbl" for="revChance">Chance a card lands reversed: <b id="revVal"></b></label>
+      <input type="range" id="revChance" min="10" max="50" step="5">
+      <label class="setcheck"><input type="checkbox" id="showUp"> Show the upright meaning on reversed cards</label>
+    </section>
+
+    <section class="setsec">
+      <h3>The sky</h3>
+      <label class="setcheck"><input type="checkbox" id="skyTime"> Sky follows the time of day (off: always night)</label>
+      <label class="setcheck"><input type="checkbox" id="motionOn"> Drifting and twinkling animations</label>
+    </section>
+
+    <section class="setsec">
+      <h3>Your data</h3>
+      <p class="setnote">Backups, the offline copy, and import are at the very bottom of the page.</p>
+      <button type="button" class="ghost" id="goData">Take me there</button>
+    </section>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script id="app">
+const $=id=>document.getElementById(id);
+/* per-device preferences (never synced, never in backups) */
+const PREF_KEY='dream-board-prefs',ORKEY='dream-board-openrouter-key';
+const DEFAULT_PREFS={model:'~deepseek/deepseek-pro-latest',customModel:'',readLen:'medium',readTone:'gentle',allowClaude:false,reversals:true,revChance:50,showUpright:true,skyFollowsTime:true,motion:true};
+let prefs=Object.assign({},DEFAULT_PREFS);
+try{Object.assign(prefs,JSON.parse(localStorage.getItem(PREF_KEY)||'{}'));}catch(e){}
+function savePrefs(){try{localStorage.setItem(PREF_KEY,JSON.stringify(prefs));}catch(e){}}
+let memKey='';
+function getKey(){try{return localStorage.getItem(ORKEY)||memKey;}catch(e){return memKey;}}
+function setKey(k){memKey=k||'';try{k?localStorage.setItem(ORKEY,k):localStorage.removeItem(ORKEY);}catch(e){}}
+/* capture the pristine page so an offline copy can be rebuilt from it */
+const PRISTINE=(()=>{try{return{
+  styles:[...document.querySelectorAll('style')].filter(s=>s.textContent.includes('--sky-top')).map(s=>s.outerHTML).join(''),
+  body:['.skybg','main.wrap','#tonight','#starPop','#zoomView','#settings','#toast'].map(q=>{const n=document.querySelector(q);return n?n.outerHTML:'';}).join('\n'),
+  app:(document.getElementById('app')||{}).textContent||''};}catch(e){return null;}})();
+let entries=[], groups=[], db=null, canWrite=true, editing=null, pendingDelete=null;
+let filter='all', flipped=new Set(), active=null; // active = {gid, focus}
+
+/* ---------- sky phase ---------- */
+const PHASES={dawn:'Dawn sky',day:'Daytime sky',dusk:'Dusk sky',night:'Night sky'};
+function phaseNow(){if(!prefs.skyFollowsTime)return 'night';const h=new Date().getHours();return h>=5&&h<8?'dawn':h>=8&&h<17?'day':h>=17&&h<20?'dusk':'night';}
+function applyPhase(){const p=phaseNow();if(document.documentElement.dataset.phase!==p){document.documentElement.dataset.phase=p;drawStars();document.querySelectorAll('.bubble').forEach(b=>{b.querySelector('.puffs').dataset.key='';puffCloud(b);});}
+  $('phaseLabel').textContent=PHASES[p]+' · waking life → the other realms';}
+
+/* ---------- stars: one per lesson ---------- */
+function seeded(str){let s=7;for(const ch of str)s=(s*31+ch.charCodeAt(0))%233280;return()=>((s=(s*9301+49297)%233280)/233280);}
+function drawStars(){
+  const c=$('stars'),x=c.getContext('2d'),r=c.getBoundingClientRect(),d=window.devicePixelRatio||1;
+  c.width=r.width*d;c.height=r.height*d;x.clearRect(0,0,c.width,c.height);
+  const col=getComputedStyle(document.documentElement).getPropertyValue('--star').trim()||'#fff';
+  const ph=document.documentElement.dataset.phase, base=ph==='day'?.55:ph==='dawn'?.65:.9;
+  x.fillStyle=col;
+  entries.forEach(e=>{const rnd=seeded(e.id);const px=rnd()*c.width,py=rnd()*c.height,rad=(rnd()*1.2+1)*d;
+    x.globalAlpha=base;x.shadowColor=col;x.shadowBlur=8*d;x.beginPath();x.arc(px,py,rad,0,7);x.fill();
+    x.globalAlpha=base*.5;x.fillRect(px-rad*3,py-.35*d,rad*6,.7*d);x.fillRect(px-.35*d,py-rad*3,.7*d,rad*6);});
+  x.globalAlpha=1;x.shadowBlur=0;
+}
+
+/* ---------- cloud silhouettes ---------- */
+function puffCloud(bub){
+  const pf=bub.querySelector('.puffs');if(!pf)return;
+  const w=bub.clientWidth,h=bub.clientHeight;if(!w||!h)return;
+  const key=w+'x'+h;if(pf.dataset.key===key)return;pf.dataset.key=key;
+  const rnd=seeded(pf.dataset.seed||'x');
+  pf.replaceChildren();const core=document.createElement('span');core.className='core';pf.append(core);
+  const add=(cx,cy,d)=>{const s=document.createElement('span');s.style.width=s.style.height=d+'px';s.style.left=(cx-d/2)+'px';s.style.top=(cy-d/2)+'px';pf.append(s);};
+  let n=Math.max(3,Math.round(w/80));for(let k=0;k<n;k++)add(w*(k+.5)/n,10+rnd()*8,Math.min(110,w/n*1.35)*(.8+rnd()*.35));
+  n=Math.max(3,Math.round(w/70));for(let k=0;k<n;k++)add(w*(k+.5)/n,h-8-rnd()*6,Math.min(80,w/n*1.3)*(.75+rnd()*.3));
+  const sides=Math.max(1,Math.round(h/70));for(let k=0;k<sides;k++){const cy=h*(k+.5)/sides,d=Math.min(90,h/sides*1.3)*(.8+rnd()*.3);add(12,cy,d);add(w-12,cy,d);}
+}
+const puffObs=('ResizeObserver' in window)?new ResizeObserver(es=>{es.forEach(en=>puffCloud(en.target));drawThreads();}):{observe:b=>requestAnimationFrame(()=>puffCloud(b))};
+
+/* ---------- helpers ---------- */
+function toast(m){const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(toast._t);toast._t=setTimeout(()=>t.hidden=true,2200);}
+function fmt(iso){try{return new Date(iso).toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'})}catch(e){return iso||''}}
+function el(tag,cls,txt){const e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e;}
+function btn(cls,txt,fn){const b=el('button',cls,txt);b.type='button';b.onclick=fn;return b;}
+const VIA={typed:'written by me',chat:'told to Claude',claude:'interpreted by Claude'};
+const groupsOf=id=>groups.filter(g=>(g.ids||[]).includes(id));
+
+/* ---------- render ---------- */
+function render(){
+  const q=$('search').value.trim().toLowerCase();
+  const shown=entries.filter(e=>(filter==='all'||(e.via||'typed')===filter)&&(!q||(e.text||'').toLowerCase().includes(q)||(e.reflection||'').toLowerCase().includes(q)));
+  const g=active&&groups.find(x=>x.id===active.gid);
+  const lit=new Set(g?g.ids:[]);
+  $('listWrap').classList.toggle('constellating',!!g);
+  if(puffObs.disconnect)puffObs.disconnect();
+  const list=$('list');list.replaceChildren();
+  $('count').textContent=db?(entries.length===1?'1 lesson · 1 star':entries.length+' lessons · '+entries.length+' stars'):$('count').textContent;
+  $('empty').hidden=!db||entries.length>0;
+  shown.forEach((e,i)=>{
+    const li=el('li','lesson');li.dataset.id=e.id;if(lit.has(e.id))li.classList.add('lit');
+    const fl=el('div','floater');fl.style.animationDelay=(-(i*2.3)%9)+'s';
+    const bub=el('div','bubble');
+    const pf=el('div','puffs');pf.setAttribute('aria-hidden','true');pf.dataset.seed=e.id;bub.append(pf);
+    const meta=el('div','meta');meta.append(el('span','dot'),el('span',null,fmt(e.createdAt)),el('span','via',VIA[e.via||'typed']||'written by me'));bub.append(meta);
+    const back=flipped.has(e.id)&&e.reflection;
+    if(editing===e.id){
+      const ta=el('textarea');ta.id='edit-'+e.id;ta.value=e.text;bub.append(ta);
+      const eg=el('div','editgrid');
+      const cn=el('input');cn.id='cn-'+e.id;cn.value=e.cardName||'';cn.placeholder='e.g. The Lantern';
+      eg.append(el('label','editlabel','Tarot card name'),cn,el('div','editlabel','Constellations'));
+      const cp=el('div','constpick');const checks=[];
+      groups.forEach(g=>{const lb=el('label');const cb=el('input');cb.type='checkbox';cb.id='cg-'+e.id+'-'+g.id;cb.checked=(g.ids||[]).includes(e.id);checks.push([g,cb]);lb.append(cb,document.createTextNode(g.name));cp.append(lb);});
+      eg.append(cp);bub.append(eg);
+      const a=el('div','actions');
+      a.append(btn('act strong','Save',async()=>{const v=ta.value;if(!v.trim())return;
+        try{await db.collection('lessons').doc(e.id).update({text:v,cardName:cn.value.trim(),editedAt:new Date().toISOString()});
+          for(const [g,cb] of checks){const has=(g.ids||[]).includes(e.id);if(cb.checked!==has){const ids=cb.checked?[...(g.ids||[]),e.id]:(g.ids||[]).filter(x=>x!==e.id);await db.collection('constellations').doc(g.id).update({ids});}}
+          editing=null;toast('Saved');render();}catch(err){toast('Could not save. Try again.');}}),
+               btn('act','Cancel',()=>{editing=null;render();}));
+      bub.append(a);
+    } else {
+      if(back){bub.append(el('div','backlabel','Claude’s reflection'),el('p','reflect',e.reflection));}
+      else bub.append(el('p','text',e.text));
+      if(e.fromDream){const d=dreams.find(x=>x.id===e.fromDream);if(d)bub.append(btn('dreamlink','Born from the dream of '+fmtNight(d.dreamDate).replace(/^[A-Za-z]+, /,''),()=>goToDream(d.id)));}
+      const a=el('div','actions');
+      if(e.reflection)a.append(btn('act strong',back?'Flip back':'Flip for reflection',()=>flip(bub,e.id)));
+      if(groupsOf(e.id).length)a.append(btn('act strong','Constellation',()=>openConst(groupsOf(e.id)[0].id,e.id)));
+      if(canWrite&&db){
+        if(pendingDelete===e.id){a.append(el('span','confirm','Remove for good?'),btn('act danger','Remove',async()=>{try{await db.collection('lessons').doc(e.id).delete();pendingDelete=null;toast('Removed');}catch(err){toast('Could not remove. Try again.');}}),btn('act','Keep it',()=>{pendingDelete=null;render();}));}
+        else a.append(btn('act','Edit',()=>{editing=e.id;pendingDelete=null;render();}),btn('act danger','Remove',()=>{pendingDelete=e.id;render();}));
+      }
+      bub.append(a);
+    }
+    fl.append(bub);li.append(fl);list.append(li);puffObs.observe(bub);
+  });
+  if(entries.length&&!shown.length)list.append(el('li','note','No clouds match that.'));
+  renderConstBar();drawStars();requestAnimationFrame(drawThreads);
+  if(!$('tarotView').hidden)updateDeckInfo();
+  if(skyMode==='stars'){$('constBar').hidden=true;$('empty').hidden=true;drawMap();}
+}
+
+function flip(bub,id){
+  const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const swap=()=>{flipped.has(id)?flipped.delete(id):flipped.add(id);render();
+    const nb=document.querySelector('li[data-id="'+id+'"] .bubble');if(nb&&!reduce){nb.classList.add('turn');requestAnimationFrame(()=>requestAnimationFrame(()=>nb.classList.remove('turn')));}};
+  if(reduce)return swap();bub.classList.add('turn');setTimeout(swap,200);
+}
+
+/* ---------- constellations ---------- */
+function openConst(gid,focus){active={gid,focus:focus||active?.focus};render();
+  const first=document.querySelector('li.lit');if(first)first.scrollIntoView({behavior:'smooth',block:'center'});}
+function renderConstBar(){
+  const bar=$('constBar'),g=active&&groups.find(x=>x.id===active.gid);
+  if(!g){bar.hidden=true;return;}
+  bar.hidden=false;$('constTitle').textContent=g.name+' · '+g.ids.length+' lessons';
+  const row=$('constChips');row.replaceChildren();
+  const others=active.focus?groupsOf(active.focus).filter(x=>x.id!==g.id):[];
+  others.forEach(o=>row.append(btn('chip',o.name,()=>openConst(o.id))));
+  row.append(btn('chip','Close constellation',()=>{active=null;render();}));
+}
+function drawThreads(){
+  const svg=$('threads');svg.replaceChildren();
+  const g=active&&groups.find(x=>x.id===active.gid);if(!g)return;
+  const wr=$('listWrap').getBoundingClientRect();
+  const pts=[...document.querySelectorAll('li.lit .bubble')].map(b=>{const r=b.getBoundingClientRect();return[r.left-wr.left+r.width/2,r.top-wr.top+r.height/2];});
+  const ns='http://www.w3.org/2000/svg';
+  const col=getComputedStyle(document.documentElement).getPropertyValue('--thread').trim();
+  for(let i=1;i<pts.length;i++){const l=document.createElementNS(ns,'line');l.setAttribute('x1',pts[i-1][0]);l.setAttribute('y1',pts[i-1][1]);l.setAttribute('x2',pts[i][0]);l.setAttribute('y2',pts[i][1]);
+    l.setAttribute('stroke',col);l.setAttribute('stroke-width','1.5');l.setAttribute('stroke-dasharray','2 7');l.setAttribute('stroke-linecap','round');l.setAttribute('opacity','.85');svg.append(l);}
+}
+addEventListener('resize',()=>{drawStars();drawThreads();});
+
+/* ---------- a lesson for tonight ---------- */
+let lastPick=null;
+function pickTonight(){
+  if(!entries.length){$('bigText').textContent='Your sky is still clear. Add your first lesson, then come back tonight.';return;}
+  let pool=entries.filter(e=>e.id!==lastPick);if(!pool.length)pool=entries;
+  const e=pool[Math.floor(Math.random()*pool.length)];lastPick=e.id;$('bigText').textContent=e.text;
+  const bc=$('bigCloud');bc.querySelector('.puffs').dataset.key='';requestAnimationFrame(()=>puffCloud(bc));
+}
+function drawTonightStars(){const c=$('tonightStars'),x=c.getContext('2d'),d=window.devicePixelRatio||1;c.width=innerWidth*d;c.height=innerHeight*d;
+  const rnd=seeded('tonight-sky');x.fillStyle='#fff4d8';for(let i=0;i<160;i++){x.globalAlpha=.2+rnd()*.7;x.beginPath();x.arc(rnd()*c.width,rnd()*c.height,(rnd()*1.2+.3)*d,0,7);x.fill();}x.globalAlpha=1;}
+$('moonBtn').onclick=()=>{$('tonight').hidden=false;drawTonightStars();pickTonight();$('anotherBtn').focus();};
+$('anotherBtn').onclick=pickTonight;
+$('closeTonight').onclick=()=>{$('tonight').hidden=true;$('moonBtn').focus();};
+addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('tonight').hidden)$('closeTonight').click();});
+if('ResizeObserver' in window)new ResizeObserver(()=>{const bc=$('bigCloud');bc.querySelector('.puffs').dataset.key='';puffCloud(bc);}).observe($('bigCloud'));
+
+/* ---------- controls ---------- */
+document.querySelectorAll('.chips .chip').forEach(c=>c.onclick=()=>{filter=c.dataset.f;document.querySelectorAll('.chips .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));render();});
+$('search').addEventListener('input',render);
+$('addBtn').addEventListener('click',async()=>{
+  const ta=$('newText'),v=ta.value;if(!v.trim()){ta.focus();return;}
+  if(!db){toast('The sky is still connecting.');return;}
+  $('addBtn').disabled=true;
+  try{await db.collection('lessons').add({text:v,createdAt:new Date().toISOString(),via:'typed'});ta.value='';toast('A new cloud and a new star');}
+  catch(err){toast(err&&err.code==='quota_exceeded'?'The board is full. Remove a few lessons first.':'Could not add it. Try again.');}
+  $('addBtn').disabled=false;
+});
+
+/* ---------- tarot ---------- */
+const MAJOR=[
+['The Fool','A fresh start and a leap of faith. Trust the path before you can see all of it.'],
+['The Magician','You already hold the tools you need. Focus your will and turn intention into action.'],
+['The High Priestess','Listen inward. Your intuition knows what logic hasn’t caught up to yet.'],
+['The Empress','Abundance, nurturing, and creativity. Let things grow at their natural pace.'],
+['The Emperor','Structure, stability, and healthy authority. Build something that holds.'],
+['The Hierophant','Tradition and shared wisdom. Learn from a teacher, or become one.'],
+['The Lovers','A meaningful union or a choice of the heart. Align your decisions with your values.'],
+['The Chariot','Willpower and forward motion. Steer opposing forces in one direction.'],
+['Strength','Quiet courage. Gentleness and patience tame what force cannot.'],
+['The Hermit','Solitude and inner searching. Step back to find your own light.'],
+['Wheel of Fortune','Cycles turn. What rises falls and rises again; move with the change.'],
+['Justice','Truth, fairness, and cause and effect. What you put out returns to you.'],
+['The Hanged Man','Pause and surrender. A new perspective arrives when you stop struggling.'],
+['Death','An ending that makes room for a beginning. Let what is finished be finished.'],
+['Temperance','Balance, moderation, and patience. Blend opposites into something whole.'],
+['The Devil','Attachments and illusions that bind you. The chains are looser than they seem.'],
+['The Tower','Sudden upheaval that clears false foundations. What falls was not built to last.'],
+['The Star','Hope and renewal after hardship. Healing is quietly underway.'],
+['The Moon','Illusion, dreams, and the unknown. Trust your intuition through the fog.'],
+['The Sun','Joy, clarity, and vitality. Things are illuminated and warm.'],
+['Judgement','Awakening and a calling. Rise, reflect, and answer it.'],
+['The World','Completion and wholeness. A cycle ends in fulfillment.']];
+const ROMAN=['0','I','II','III','IV','V','VI','VII','VIII','IX','X','XI','XII','XIII','XIV','XV','XVI','XVII','XVIII','XIX','XX','XXI'];
+const RANKS=['Ace','Two','Three','Four','Five','Six','Seven','Eight','Nine','Ten','Page','Knight','Queen','King'];
+const SUITS={
+Wands:['Fire · passion and action',[
+'A spark of inspiration or a new venture. Act on the creative fire.','Planning and bold vision. The world is open; decide where to go.','Expansion and foresight. What you set in motion is starting to return.','Celebration and homecoming. A milestone worth honoring.','Friction and competition. Let the struggle sharpen you.','Victory and recognition. Let yourself be seen for your progress.','Standing your ground. Defend what you believe in.','Swift movement and news. Things are speeding up; go with it.','Resilience near the finish. You are tired but nearly there.','Overload and burden. You may be carrying more than is yours.','Curious enthusiasm and new ideas. Explore without fear of failing.','Passionate, bold action. Charge ahead, but watch for impulsiveness.','Confident warmth and magnetism. Lead with courage and heart.','Visionary leadership. Turn big ideas into reality with conviction.']],
+Cups:['Water · emotion and connection',[
+'A new flow of love, compassion, or emotional opening.','Partnership and mutual connection. A bond between equals.','Friendship and celebration. Joy shared in community.','Apathy or contemplation. Notice what is being offered that you are overlooking.','Grief and regret. Some is spilled, but not all; turn toward what remains.','Nostalgia and innocence. Childhood memories and gentle kindness.','Many choices and daydreams. Separate illusion from what is real.','Walking away from what no longer fulfills you, in search of deeper meaning.','Contentment and wishes fulfilled. Enjoy what you have built.','Emotional harmony and family happiness. Love that feels like home.','A sensitive message or intuitive spark. Stay open to feeling.','Romance and following the heart. An invitation or an offer.','Compassion and emotional depth. Care for others without losing yourself.','Emotional mastery. Calm, wise, and steady in feeling.']],
+Swords:['Air · mind, truth, and conflict',[
+'Clarity and breakthrough. A truth cuts through confusion.','Stalemate and avoidance. A decision you have been putting off.','Heartbreak and painful truth. Let the grief move through.','Rest and recovery. Pause to restore your mind.','Conflict with a hollow win. Ask whether the fight is worth it.','Transition toward calmer waters. Moving on from difficulty.','Strategy or deception. Watch for what is being hidden, by others or yourself.','Feeling trapped by your own thoughts. The binds are looser than they look.','Anxiety and sleepless worry. Fear is often bigger in the mind than in reality.','A painful ending, a rock bottom. From here the only way is up.','Curiosity and sharp observation. Ask questions and seek the truth.','Fast, driven action. Be decisive, but do not trample others.','Clear boundaries and honest perception. Truth spoken with grace.','Intellectual authority and fairness. Lead with reason and integrity.']],
+Pentacles:['Earth · body, work, and abundance',[
+'A new opportunity for prosperity or grounded growth.','Juggling priorities. Stay flexible and keep your balance.','Teamwork and craftsmanship. Your skills are being recognized.','Holding on tightly. Security turns into scarcity if you grip too hard.','Hardship and feeling left out in the cold. Help is closer than it seems.','Giving and receiving. Generosity that flows both ways.','Patience and long-term investment. Assess your growth before the harvest.','Diligence and mastery. Steady practice builds real skill.','Self-sufficiency and refined abundance. Enjoy what you have earned.','Legacy and lasting wealth. Building something for generations.','Eager learning and new plans. Plant the seed and study it.','Steady, reliable effort. Slow progress that gets there.','Nurturing and practical care. A warm, abundant home.','Material success and security. Grounded leadership and generosity.']]};
+const MAJOR_REV=["Recklessness, or holding back from a leap out of fear. Look before you jump, or stop waiting to.", "Scattered energy or untapped skill. Watch for manipulation, including the stories you tell yourself.", "Ignoring your intuition, or secrets kept from yourself. Get quiet enough to hear again.", "Creative block or neglecting your own care. Nurture yourself before you pour into others.", "Control turned rigid, or structure missing. Strength has tipped into domination, or gone absent.", "Breaking from convention. Question the rules that no longer fit you.", "A choice out of line with your values. Disharmony in a relationship, or within yourself.", "Losing direction or control. Your will is scattered; regroup before you push on.", "Self-doubt, or raw emotion running the show. Return to your gentle inner power.", "Isolation turning into loneliness, or avoiding the solitude you need.", "Resisting change, or a run of bad luck. Hold steady; the wheel keeps turning.", "Unfairness, dishonesty, or avoiding accountability. Own your part.", "Stalling or needless sacrifice. The pause is over; it is time to let go and move.", "Resisting an ending. Clinging to what is finished keeps the new from arriving.", "Imbalance and excess. Something is too much or too little; find the middle again.", "Breaking free. Releasing an attachment, or finally seeing the chain clearly.", "Resisting a needed collapse, or narrowly avoiding one. Change delayed is still coming.", "Discouragement or lost faith. Hope has not left; reconnect with it.", "Confusion beginning to clear, or fear still clouding the way. The truth is surfacing.", "Joy dimmed or delayed. The light is there, but something is blocking it.", "Self-doubt, or ignoring the call. Harsh self-judgment is blocking your renewal.", "Closure not quite reached. One last step before the cycle can finish."];
+const SUIT_REV={"Wands": ["Delays, or a spark that fizzles. Wait for real fire.", "Fear of the unknown, or playing it too safe.", "Setbacks in expansion. What you sent out has not returned yet.", "An unsettled home, or a celebration postponed.", "Avoiding conflict, or a conflict finally ending.", "Lack of recognition, or an ego that depends on praise.", "Feeling overwhelmed or giving up ground. Choose which battles matter.", "Delays and frustration. Slow down rather than force it.", "Exhaustion and suspicion. Rest before you fight again.", "Finally setting a burden down, or refusing to.", "Scattered enthusiasm. Ideas without follow-through.", "Haste, impulsiveness, or anger. Slow the charge.", "Jealousy or burnout. Your confidence has been shaken.", "Impulsive leadership or arrogance. Vision without patience."], "Cups": ["Blocked emotions, or a lack of self-love. Fill your own cup first.", "Imbalance or a broken connection in a partnership.", "Overindulgence or gossip. A friendship under strain.", "Coming out of apathy, and finally seeing what is offered.", "Acceptance and moving on. Forgiving what was spilled.", "Stuck in the past. Let the nostalgia go.", "Clarity after confusion. Choosing what is real.", "Fear of leaving, or drifting without purpose.", "Wishes unfulfilled, or satisfaction that is only on the surface.", "Disharmony at home, or an ideal that does not match reality.", "Emotional immaturity or blocked creativity.", "Moodiness or unrealistic romance.", "Emotional insecurity, or giving too much of yourself.", "Bottled-up feelings, or emotional manipulation."], "Swords": ["Confusion, or truth used as a weapon. Words that cut the wrong way.", "Indecision lifting, or too much information at once.", "Recovery from heartbreak. Releasing the pain.", "Restlessness or burnout. Returning before you are ready.", "Reconciliation, or lingering resentment.", "Resistance to moving on. Unfinished business.", "Coming clean, or self-deception exposed.", "Releasing self-imposed limits. Seeing the way out.", "Worries easing, or hidden anxiety that needs care.", "Recovery and regeneration. The worst is over.", "Hasty words or gossip. Scattered thinking.", "Rushing in without a plan. Words as weapons.", "Coldness or bitterness. Truth delivered without grace.", "Misused power, or manipulation dressed up as logic."], "Pentacles": ["A missed opportunity, or poor planning with what you have.", "Overwhelm. Too many things in the air at once.", "Poor teamwork, or a lack of effort.", "Greed, or finally loosening control over money.", "Recovery from hardship. Help is arriving.", "Strings attached. Giving that is out of balance.", "Impatience. Effort that has not paid off yet.", "Perfectionism, or a lack of focus.", "Overworking, or depending on others for security.", "Family disputes, or instability in what was built.", "Procrastination, or a lack of progress.", "Stagnation. Stuck in routine.", "Neglecting yourself while caring for others.", "Greed, or an obsession with status."]};
+const TRAD=[...MAJOR.map((m,i)=>({id:'M'+i,name:m[0],num:'Major Arcana · '+ROMAN[i],meaning:m[1],rev:MAJOR_REV[i]}))];
+Object.entries(SUITS).forEach(([suit,[elem,ms]])=>ms.forEach((m,i)=>TRAD.push({id:suit+i,name:RANKS[i]+' of '+suit,num:elem,meaning:m,rev:SUIT_REV[suit][i]})));
+
+const SPREADS={1:['Your message'],2:['What is happening','What to do'],3:['Past','Present','Future']};
+let deck='mine';
+const deckState={mine:{order:[],used:new Set()},clear:{order:[],used:new Set()},trad:{order:[],used:new Set()}};
+const DECKNAMES={mine:'Lesson deck',clear:'Clear Skies',trad:'Traditional tarot',mix:'Mixed spread'};
+const DECKABOUT={mine:'Your lessons, in your own words.',clear:'Gentle reminders for when a craving or an old pattern comes knocking.',trad:'The 78 classic cards. Some will land reversed, just like a real shuffle.',mix:'Build a spread from any of your decks. Each tap draws one card.'};
+let reminders=[], csEditing=null, csPendingDelete=null;
+/* gold emblems: simple line drawings, 48x48 */
+const ICONS={
+moon:'<path d="M30 8a16 16 0 1 0 10 28A14 14 0 0 1 30 8z"/>',
+sun:'<circle cx="24" cy="24" r="8"/><path d="M24 6v6M24 36v6M6 24h6M36 24h6M11 11l4 4M33 33l4 4M37 11l-4 4M15 33l-4 4"/>',
+eye:'<path d="M4 24s8-12 20-12 20 12 20 12-8 12-20 12S4 24 4 24z"/><circle cx="24" cy="24" r="5"/>',
+wave:'<path d="M4 20c5-6 10-6 15 0s10 6 15 0 10-6 10-6M4 31c5-6 10-6 15 0s10 6 15 0 10-6 10-6"/>',
+spiral:'<path d="M24 24a2 2 0 1 1 2 2 5 5 0 1 1-5-5 8 8 0 1 1 8 8 11 11 0 1 1-11-11 14 14 0 1 1 14 14"/>',
+heart:'<path d="M24 40S6 28 6 17a9 9 0 0 1 18-3 9 9 0 0 1 18 3c0 11-18 23-18 23z"/>',
+cup:'<path d="M12 10h24l-3 15a9 9 0 0 1-18 0zM24 34v7M16 42h16"/>',
+serpent:'<path d="M8 38c6 0 8-6 14-6s6 6 12 6 6-8 0-10-12-4-12-10 8-8 12-6"/><circle cx="36" cy="12" r="1.5"/>',
+door:'<rect x="14" y="6" width="20" height="36" rx="1"/><circle cx="29" cy="25" r="1.5"/>',
+key:'<circle cx="15" cy="24" r="7"/><path d="M22 24h20M36 24v6M41 24v4"/>',
+crown:'<path d="M8 36L6 16l10 8 8-14 8 14 10-8-2 20z"/>',
+flag:'<path d="M12 42V6M12 8h24v16H12M18 8v16M24 8v16M30 8v16M12 16h24"/>',
+house:'<path d="M8 22L24 8l16 14M12 19v21h24V19M21 40v-9h6v9"/>',
+tree:'<path d="M24 42V24M24 32l-7-6M24 28l7-6"/><circle cx="24" cy="16" r="10"/>',
+wings:'<path d="M24 30C18 20 8 18 4 20c2 6 10 12 20 10zM24 30c6-10 16-12 20-10-2 6-10 12-20 10zM24 30v10"/>',
+butterfly:'<path d="M24 14v22M24 22C16 8 4 12 8 22s16 2 16 2M24 22c8-14 20-10 16 0s-16 2-16 2M24 26c-6 4-14 10-10 14s10-6 10-10M24 26c6 4 14 10 10 14s-10-6-10-10"/>',
+mask:'<path d="M6 14c6 2 12 2 18-2 6 4 12 4 18 2 0 14-6 22-18 22S6 28 6 14z"/><path d="M13 22h7M28 22h7M20 31c3 2 5 2 8 0"/>',
+shield:'<path d="M24 6l16 6v10c0 10-7 17-16 20C15 39 8 32 8 22V12z"/><path d="M24 14v20"/>',
+book:'<path d="M24 12c-6-4-12-4-18-2v28c6-2 12-2 18 2 6-4 12-4 18-2V10c-6-2-12-2-18 2zM24 12v28"/>',
+flame:'<path d="M24 42c-8 0-12-6-12-12 0-8 8-12 8-22 6 6 4 10 8 14 2-4 2-6 2-8 4 4 6 10 6 16 0 6-4 12-12 12z"/>',
+target:'<circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="9"/><circle cx="24" cy="24" r="2"/>',
+hourglass:'<path d="M14 6h20M14 42h20M16 6c0 10 16 12 16 18S16 32 16 42M32 6c0 10-16 12-16 18s16 8 16 18"/>',
+yinyang:'<circle cx="24" cy="24" r="16"/><path d="M24 8a8 8 0 0 1 0 16 8 8 0 0 0 0 16"/><circle cx="24" cy="16" r="1.5"/><circle cx="24" cy="32" r="1.5"/>',
+well:'<path d="M10 22h28M13 22v18h22V22M14 22l10-12 10 12M24 28c-2 3-3 4-3 6a3 3 0 0 0 6 0c0-2-1-3-3-6z"/>',
+mirror:'<ellipse cx="24" cy="19" rx="10" ry="13"/><path d="M24 32v9M18 42h12M20 13c-2 2-2 6 0 8"/>',
+wind:'<path d="M6 18h22a5 5 0 1 0-5-5M6 26h30a5 5 0 1 1-5 5M6 34h14"/>',
+swarm:'<circle cx="14" cy="16" r="1.6"/><circle cx="24" cy="12" r="1.6"/><circle cx="33" cy="18" r="1.6"/><circle cx="18" cy="26" r="1.6"/><circle cx="30" cy="28" r="1.6"/><circle cx="22" cy="36" r="1.6"/><circle cx="36" cy="36" r="1.6"/><circle cx="10" cy="34" r="1.6"/>',
+void:'<circle cx="24" cy="24" r="16" stroke-dasharray="2 4"/><circle cx="24" cy="24" r="6"/>',
+cycle:'<path d="M37 17a14 14 0 0 0-25 3M11 31a14 14 0 0 0 25-3M37 8v9h-9M11 40v-9h9"/>',
+coin:'<circle cx="24" cy="24" r="16"/><circle cx="24" cy="24" r="11"/><path d="M24 17v14M20 20h6a3 3 0 0 1 0 6h-4a3 3 0 0 0 0 6h6"/>',
+mountain:'<path d="M4 40l14-22 8 12 6-8 12 18zM14 25l4 3 4-4"/>',
+star:'<path d="M24 6l5 12 13 1-10 8 3 13-11-7-11 7 3-13-10-8 13-1z"/>',
+elephant:'<path d="M12 36V24c0-9 6-14 14-14 9 0 14 6 14 13v5c0 5-2 8-4 10M36 36v-6M16 36v-6M22 36v-5M30 36v-5M12 26c-4 1-6 4-6 8s2 6 4 6"/><circle cx="31" cy="20" r="1.4"/><path d="M26 14c-4 2-5 8-2 11"/>',
+hands:'<path d="M10 30c4-2 8 2 14 2s10-4 14-2M8 34c6 6 26 6 32 0M16 26c0-4 3-8 8-8s8 4 8 8"/>',
+sword:'<path d="M24 4v30M18 34h12M24 34v8M21 42h6M24 4l-3 4v26M24 4l3 4v26"/>',
+pentacle:'<circle cx="24" cy="24" r="17"/><path d="M24 9l9 28-24-17h30L15 37z"/>',
+seed:'<path d="M24 42c0-10 0-16-8-22 8 0 8 6 8 10 0-8 4-14 12-14-6 4-8 10-8 16"/><path d="M14 42h20"/>'};
+const EMBLEM_RULES=[[/moon|still|gentle dark|rested/,'moon'],[/morning light|sun/,'sun'],[/eye|sage|showing|riddle|true colors/,'eye'],[/wave|tide|clear waters/,'wave'],[/spiral|returning|plot twist/,'spiral'],[/heart/,'heart'],[/cup|encore|feast/,'cup'],[/serpent/,'serpent'],[/door|other room|bare room/,'door'],[/landlord|key/,'key'],[/sovereign|crown/,'crown'],[/flag/,'flag'],[/new home|builder|house/,'house'],[/garden|soil|tree/,'tree'],[/wings|reins/,'wings'],[/butterfly/,'butterfly'],[/mask|villain|dreamer/,'mask'],[/guardian|safe keeper|shield/,'shield'],[/chapter|book/,'book'],[/burial|flame|fire/,'flame'],[/center|aim|target/,'target'],[/present|hourglass/,'hourglass'],[/opposite|yin/,'yinyang'],[/well/,'well'],[/mirror/,'mirror'],[/breeze|wind/,'wind'],[/swarm/,'swarm'],[/void/,'void'],[/treadmill|burden|cycle/,'cycle'],[/debt|coin/,'coin'],[/stand|mountain/,'mountain'],[/elephant/,'elephant'],[/grip|hand|bow|loving wall/,'hands'],[/scared child|star/,'star']];
+function emblemFor(name){const n=(name||'').toLowerCase();for(const [re,ic] of EMBLEM_RULES)if(re.test(n))return ic;return 'star';}
+function emblemSvg(key){const s=document.createElementNS('http://www.w3.org/2000/svg','svg');s.setAttribute('viewBox','0 0 48 48');s.setAttribute('class','temblem');s.setAttribute('aria-hidden','true');s.innerHTML=ICONS[key]||ICONS.star;return s;}
+TRAD.forEach(c=>{c.emblem=c.id.startsWith('M')?(['The Moon','The Sun','The Star','The Lovers','Wheel of Fortune'].includes(c.name)?({'The Moon':'moon','The Sun':'sun','The Star':'star','The Lovers':'heart','Wheel of Fortune':'cycle'})[c.name]:'star'):c.id.startsWith('Wands')?'flame':c.id.startsWith('Cups')?'cup':c.id.startsWith('Swords')?'sword':'pentacle';});
+function mineCards(){return entries.map(e=>({id:e.id,name:e.cardName||'Unnamed card',emblem:emblemFor(e.cardName),num:VIA[e.via||'typed']==='interpreted by Claude'?'Lesson deck · interpreted by Claude':'Lesson deck',meaning:e.text,reflection:e.reflection}));}
+function clearCards(){return reminders.map(r=>({id:r.id,name:r.cardName||'A gentle reminder',emblem:r.cardName?emblemFor(r.cardName):'sun',num:r.via==='claude'?'Clear Skies · from Claude':'Clear Skies',meaning:r.text,clear:true}));}
+function cardsOf(d){return d==='mine'?mineCards():d==='clear'?clearCards():TRAD;}
+function remaining(d){const ids=new Set(cardsOf(d).map(c=>c.id));return [...ids].filter(id=>!deckState[d].used.has(id));}
+function shuffleArr(a){for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function reshuffle(d){deckState[d].order=shuffleArr(remaining(d));}
+function updateDeckInfo(){
+  $('deckName').textContent=DECKNAMES[deck];$('deckAbout').textContent=DECKABOUT[deck];
+  const mix=deck==='mix';$('mixRow').hidden=!mix;$('pullRow').hidden=mix;$('stack').hidden=mix;
+  $('csManage').hidden=deck!=='clear';if(deck==='clear')renderReminders();
+  if(mix){
+    $('deckCount').textContent='Tap a deck to draw from it.';
+    document.querySelectorAll('.mixdeck').forEach(b=>{const n=remaining(b.dataset.d).length;b.querySelector('.mleft').textContent=n+' left';b.disabled=!n;});
+    return;
+  }
+  const total=cardsOf(deck).length,left=remaining(deck).length;
+  $('deckCount').textContent=total?left+' of '+total+' cards in the deck':'No cards yet. Add your first reminder below.';
+  document.querySelectorAll('.pull').forEach(b=>b.disabled=left===0);
+}
+function doShuffle(){
+  (deck==='mix'?['mine','clear','trad']:[deck]).forEach(reshuffle);const st=$('stack');st.classList.remove('shuffling');void st.offsetWidth;st.classList.add('shuffling');
+  setTimeout(()=>st.classList.remove('shuffling'),950);$('tarotHint').textContent='Shuffled. Now pull your cards.';
+}
+function draw(d,n){
+  const s=deckState[d],left=new Set(remaining(d));
+  s.order=s.order.filter(id=>left.has(id));
+  const fresh=[...left].filter(id=>!s.order.includes(id));s.order.push(...shuffleArr(fresh));
+  const ids=s.order.splice(0,n);ids.forEach(id=>s.used.add(id));
+  const all=cardsOf(d);
+  return ids.map(id=>({d,c0:all.find(x=>x.id===id),isRev:d==='trad'&&prefs.reversals&&Math.random()<prefs.revChance/100})).filter(x=>x.c0);
+}
+function cardFace(c0,isRev,cls){
+  const c=isRev?Object.assign({},c0,{meaning:c0.rev}):c0;
+  const front=el('div',cls+(isRev?' reversed':'')+(c.clear?' clearsky':''));
+  front.append(el('div','tnum',c.num),emblemSvg(c.emblem),el('div','tname',c.name));
+  if(isRev)front.append(el('div','revtag','Reversed'));
+  front.append(el('div','trule'),el('p','tmeaning',c.meaning));
+  if(isRev&&prefs.showUpright){const up=el('p','tupright');up.append(el('b',null,'Upright'),document.createTextNode(c0.meaning));front.append(up);}
+  if(c.reflection){const rp=el('p','trefl',c.reflection);rp.hidden=true;
+    const rb=btn('trefbtn','Claude’s reflection',ev=>{ev.stopPropagation();rp.hidden=!rp.hidden;rb.textContent=rp.hidden?'Claude’s reflection':'Hide reflection';});
+    front.append(rp,rb);}
+  return front;
+}
+let tableItems=[],zoomIdx=0;
+function fillZoom(){
+  const it=tableItems[zoomIdx];if(!it)return;const {c0,isRev}=it;
+  const z=$('zoomCard');z.replaceChildren();z.className='zoomcard'+(isRev?' reversed':'')+(c0.clear?' clearsky':'');
+  const f=cardFace(c0,isRev,'');[...f.childNodes].forEach(n=>z.append(n));
+  const n=tableItems.length,left=n-1-zoomIdx;
+  $('zoomCount').textContent=(it.label?it.label+' · ':'')+(zoomIdx+1)+' of '+n;
+  document.querySelector('.zoomghost.g1').hidden=left<1;document.querySelector('.zoomghost.g2').hidden=left<2;
+  $('zoomPrev').disabled=zoomIdx===0;$('zoomNext').disabled=zoomIdx>=n-1;$('zoomHint').hidden=n<2;
+  $('zoomPrev').hidden=$('zoomNext').hidden=n<2;
+  if(it.card&&!it.card.classList.contains('open'))it.card.classList.add('open');
+}
+function openZoomAt(i){zoomIdx=Math.max(0,Math.min(tableItems.length-1,i));fillZoom();$('zoomView').hidden=false;$('zoomClose').focus();}
+function openZoom(c0,isRev){const i=tableItems.findIndex(t=>t.c0===c0);if(i>=0)return openZoomAt(i);tableItems=[{c0,isRev}];openZoomAt(0);}
+function zoomGo(dir){
+  const ni=zoomIdx+dir;if(ni<0||ni>=tableItems.length){snapBack();return;}
+  const z=$('zoomCard'),reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(reduce){zoomIdx=ni;fillZoom();return;}
+  z.style.transition='transform .22s ease-in, opacity .22s';z.style.transform='translateX('+(dir>0?-120:120)+'%) rotate('+(dir>0?-8:8)+'deg)';z.style.opacity='0';
+  setTimeout(()=>{zoomIdx=ni;fillZoom();z.style.transition='none';z.style.transform='translateX('+(dir>0?40:-40)+'%) scale(.94)';z.style.opacity='0';
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{z.style.transition='transform .25s ease-out, opacity .25s';z.style.transform='';z.style.opacity='';}));},220);
+}
+function snapBack(){const z=$('zoomCard');z.style.transition='transform .2s ease-out';z.style.transform='';}
+(()=>{let x0=null,y0=0,dx=0,dragging=false;const z=$('zoomCard');
+  z.addEventListener('pointerdown',e=>{x0=e.clientX;y0=e.clientY;dx=0;dragging=false;});
+  z.addEventListener('pointermove',e=>{if(x0===null)return;dx=e.clientX-x0;const dy=e.clientY-y0;
+    if(!dragging&&Math.abs(dx)>8&&Math.abs(dx)>Math.abs(dy)){dragging=true;try{z.setPointerCapture(e.pointerId);}catch(_){}}
+    if(dragging){z.style.transition='none';z.style.transform='translateX('+dx+'px) rotate('+(dx/40)+'deg)';}});
+  const end=()=>{if(x0===null)return;const was=dragging;x0=null;dragging=false;if(!was)return;
+    if(dx<-60)zoomGo(1);else if(dx>60)zoomGo(-1);else snapBack();};
+  z.addEventListener('pointerup',end);z.addEventListener('pointercancel',()=>{x0=null;dragging=false;snapBack();});
+})();
+$('offlineX').onclick=()=>{$('offlineBar').hidden=true;try{localStorage.setItem('dream-board-bar-dismissed','1');}catch(e){}};
+$('zoomPrev').onclick=()=>zoomGo(-1);$('zoomNext').onclick=()=>zoomGo(1);
+addEventListener('keydown',ev=>{if($('zoomView').hidden)return;if(ev.key==='ArrowRight')zoomGo(1);else if(ev.key==='ArrowLeft')zoomGo(-1);});
+$('zoomClose').onclick=()=>{$('zoomView').hidden=true;};
+$('zoomView').addEventListener('click',ev=>{if(ev.target===$('zoomView')||ev.target.classList.contains('zoominner'))$('zoomView').hidden=true;});
+addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('zoomView').hidden)$('zoomView').hidden=true;});
+function makeCard({c0,isRev},label,i,mini){
+  const slot=el('div','slot');slot.style.animationDelay=mini?'0s':(i*.15)+'s';
+  slot.append(el('div','slotlabel'+(mini&&isRev?' rev':''),label||''));
+  const card=el('div','tcard'+(mini?' mini':'')+(mini&&isRev?' isrev':''));card.tabIndex=0;card.setAttribute('role','button');card.setAttribute('aria-label','Turn over card '+(i+1));
+  const inner=el('div','tinner');
+  const back=el('div','tface tback');back.append(el('span','tapme','Tap to turn'));
+  let front;
+  if(mini){front=el('div','tface tfront'+(c0.clear?' clearsky':''));front.append(el('div','tnum',c0.num),emblemSvg(c0.emblem),el('div','tname',c0.name));}
+  else front=cardFace(c0,isRev,'tface tfront');
+  inner.append(back,front);card.append(inner);
+  const turn=()=>{if(!card.classList.contains('open')){card.classList.add('open');card.setAttribute('aria-label',c0.name+(isRev?', reversed':'')+'. Tap to see it up close.');}else openZoom(c0,isRev);};
+  card.onclick=turn;card.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();turn();}};
+  card._turn=turn;slot._card=card;
+  slot.append(card);return slot;
+}
+function resetReadingUI(show){
+  $('readingNotes').value='';$('saveReading').hidden=!show||!db;
+  lastReading=null;$('aiBox').hidden=true;$('aiText').textContent='';if(aiCtl)aiCtl.abort();
+}
+function renderSpread(items,labels){
+  const spread=$('spread');spread.replaceChildren();spread.classList.remove('mixed');
+  tableItems=[];items.forEach((it,i)=>{const sl=makeCard(it,labels[i],i,false);spread.append(sl);tableItems.push({c0:it.c0,isRev:it.isRev,label:labels[i]||'',card:sl._card});});
+  resetReadingUI(items.length);
+}
+function pull(n){
+  const items=draw(deck,n);
+  const labels=deck==='clear'?items.map(()=>'A gentle reminder'):(SPREADS[items.length]||[]);
+  renderSpread(items,labels);
+  lastPull={deck,cards:items.map((x,i)=>({id:x.c0.id,name:x.c0.name,label:labels[i]||'',reversed:!!x.isRev,deck:x.d,meaning:x.isRev?x.c0.rev:x.c0.meaning}))};
+  if(items.length<n)$('tarotHint').textContent='Only '+items.length+' card'+(items.length===1?' was':'s were')+' left in the deck. Return all cards to start again.';
+  else $('tarotHint').textContent='Tap a card to turn it over.';
+  updateDeckInfo();
+}
+function drawOne(d,btnEl){
+  const got=draw(d,1)[0];
+  if(!got){toast(DECKNAMES[d]+' is empty. Return all cards to start again.');return;}
+  if(!lastPull||lastPull.deck!=='mix'){lastPull={deck:'mix',cards:[]};$('spread').replaceChildren();tableItems=[];}
+  const spread=$('spread');spread.classList.add('mixed');
+  const label=DECKNAMES[d]+(got.isRev?' · Reversed':'');
+  const slot=makeCard(got,label,lastPull.cards.length,true);spread.append(slot);tableItems.push({c0:got.c0,isRev:got.isRev,label:DECKNAMES[d],card:slot._card});
+  lastPull.cards.push({id:got.c0.id,name:got.c0.name,label:DECKNAMES[d],reversed:!!got.isRev,deck:d,meaning:got.isRev?got.c0.rev:got.c0.meaning});
+  const card=slot.querySelector('.tcard');setTimeout(()=>card._turn(),matchMedia('(prefers-reduced-motion: reduce)').matches?0:420);
+  if(btnEl){btnEl.classList.remove('tap');void btnEl.offsetWidth;btnEl.classList.add('tap');}
+  resetReadingUI(true);
+  $('tarotHint').textContent='Tap a deck to draw another. Tap a card to see it up close.';
+  updateDeckInfo();
+}
+document.querySelectorAll('.mixdeck').forEach(b=>b.onclick=()=>drawOne(b.dataset.d,b));
+document.querySelectorAll('.deckpick .chip').forEach(c=>c.onclick=()=>{deck=c.dataset.deck;document.querySelectorAll('.deckpick .chip').forEach(x=>x.setAttribute('aria-pressed',String(x===c)));
+  $('spread').replaceChildren();$('spread').classList.remove('mixed');lastPull=null;$('saveReading').hidden=true;$('tarotHint').textContent=deck==='mix'?'Tap a deck to draw a card. Tap a card to see it up close.':'Shuffle if you like, then pull. Tap a card to turn it over.';updateDeckInfo();});
+document.querySelectorAll('.pull').forEach(b=>b.onclick=()=>pull(+b.dataset.n));
+$('shuffleBtn').onclick=doShuffle;
+$('resetBtn').onclick=()=>{(deck==='mix'?['mine','clear','trad']:[deck]).forEach(d=>{deckState[d]={order:[],used:new Set()};});$('spread').replaceChildren();lastPull=null;$('saveReading').hidden=true;$('tarotHint').textContent='All cards are back in the deck. Shuffle, then pull.';updateDeckInfo();};
+
+/* ---------- Clear Skies cards ---------- */
+function renderReminders(){
+  const list=$('csList');if(!list)return;list.replaceChildren();
+  $('csAdd').disabled=!db||!canWrite;
+  reminders.forEach(r=>{
+    const card=el('div','rcard');
+    if(csEditing===r.id){
+      const ni=el('input');ni.id='csn-'+r.id;ni.value=r.cardName||'';ni.placeholder='Card name (optional)';
+      const ti=el('textarea');ti.id='cst-'+r.id;ti.value=r.text;ti.rows=4;
+      const a=el('div','actions');
+      a.append(btn('act strong','Save',async()=>{if(!ti.value.trim())return;try{await db.collection('reminders').doc(r.id).update({cardName:ni.value.trim(),text:ti.value,editedAt:new Date().toISOString()});csEditing=null;toast('Saved');}catch(e){toast('Could not save. Try again.');}}),btn('act','Cancel',()=>{csEditing=null;renderReminders();}));
+      card.append(ni,ti,a);list.append(card);return;
+    }
+    if(r.cardName)card.append(el('div','csname',r.cardName));
+    card.append(el('p','rnotes',r.text));
+    if(canWrite&&db){const a=el('div','actions');
+      if(csPendingDelete===r.id)a.append(el('span','confirm','Remove this card?'),btn('act danger','Remove',async()=>{try{await db.collection('reminders').doc(r.id).delete();csPendingDelete=null;toast('Removed');}catch(e){toast('Could not remove. Try again.');}}),btn('act','Keep it',()=>{csPendingDelete=null;renderReminders();}));
+      else a.append(btn('act','Edit',()=>{csEditing=r.id;csPendingDelete=null;renderReminders();}),btn('act danger','Remove',()=>{csPendingDelete=r.id;renderReminders();}));
+      card.append(a);}
+    list.append(card);
+  });
+  if(!reminders.length)list.append(el('p','jempty','No cards yet. Your first reminder can go above, or tell Claude in the chat.'));
+}
+$('csAdd').onclick=async()=>{
+  const t=$('csText').value;if(!t.trim()){$('csText').focus();return;}if(!db)return;
+  $('csAdd').disabled=true;
+  try{await db.collection('reminders').add({text:t,cardName:$('csName').value.trim(),createdAt:new Date().toISOString(),via:'typed'});$('csText').value='';$('csName').value='';toast('Added to Clear Skies');}
+  catch(e){toast('Could not add it. Try again.');}
+  $('csAdd').disabled=false;
+};
+
+/* ---------- settings ---------- */
+function applyMotion(){document.documentElement.classList.toggle('calm',!prefs.motion);}
+function fillSettings(){
+  const k=getKey();$('orKey').value=k;$('orKey').type='password';$('orShow').textContent='Show';
+  const known=[...$('orModel').options].some(o=>o.value===prefs.model);
+  $('orModel').value=known?prefs.model:'custom';$('orCustom').hidden=$('orModel').value!=='custom';$('orCustom').value=known?prefs.customModel:(prefs.customModel||prefs.model);
+  $('readLen').value=prefs.readLen;$('readTone').value=prefs.readTone;$('allowClaude').checked=prefs.allowClaude;
+  $('revOn').checked=prefs.reversals;$('revChance').value=prefs.revChance;$('revVal').textContent=prefs.revChance+'%';$('revChance').disabled=!prefs.reversals;
+  $('showUp').checked=prefs.showUpright;$('skyTime').checked=prefs.skyFollowsTime;$('motionOn').checked=prefs.motion;
+  $('orKey').disabled=inClaude;$('orTest').disabled=inClaude;$('allowClaudeRow').hidden=!inClaude;
+  $('aiWhere').textContent=inClaude
+    ?'You’re using the board inside Claude, which can’t connect to OpenRouter. Enter your key in your standalone copy (Download offline copy at the bottom, or your GitHub Pages site), and DeepSeek will write your readings there.'
+    :'Readings are written by the model you choose below, through your own OpenRouter account.';
+  $('orStatus').textContent=k&&!inClaude?'A key is saved on this device.':'';
+}
+function currentModel(){return prefs.model==='custom'?(prefs.customModel||'').trim():prefs.model;}
+$('openSettings').onclick=()=>{fillSettings();$('settings').hidden=false;$('closeSettings').focus();};
+$('closeSettings').onclick=()=>{$('settings').hidden=true;$('openSettings').focus();};
+$('settings').addEventListener('click',ev=>{if(ev.target===$('settings'))$('closeSettings').click();});
+addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('settings').hidden)$('closeSettings').click();});
+$('orShow').onclick=()=>{const t=$('orKey');t.type=t.type==='password'?'text':'password';$('orShow').textContent=t.type==='password'?'Show':'Hide';};
+$('orKey').addEventListener('change',()=>{setKey($('orKey').value.trim());$('orStatus').textContent=$('orKey').value.trim()?'Key saved on this device.':'';});
+$('orClear').onclick=()=>{setKey('');$('orKey').value='';$('orStatus').textContent='Key removed from this device.';};
+$('orModel').onchange=()=>{prefs.model=$('orModel').value;$('orCustom').hidden=prefs.model!=='custom';savePrefs();};
+$('orCustom').addEventListener('change',()=>{prefs.customModel=$('orCustom').value.trim();savePrefs();});
+$('readLen').onchange=()=>{prefs.readLen=$('readLen').value;savePrefs();};
+$('readTone').onchange=()=>{prefs.readTone=$('readTone').value;savePrefs();};
+$('allowClaude').onchange=()=>{prefs.allowClaude=$('allowClaude').checked;savePrefs();};
+$('revOn').onchange=()=>{prefs.reversals=$('revOn').checked;$('revChance').disabled=!prefs.reversals;savePrefs();};
+$('revChance').oninput=()=>{prefs.revChance=+$('revChance').value;$('revVal').textContent=prefs.revChance+'%';savePrefs();};
+$('showUp').onchange=()=>{prefs.showUpright=$('showUp').checked;savePrefs();};
+$('skyTime').onchange=()=>{prefs.skyFollowsTime=$('skyTime').checked;savePrefs();applyPhase();};
+$('motionOn').onchange=()=>{prefs.motion=$('motionOn').checked;savePrefs();applyMotion();};
+$('goData').onclick=()=>{$('settings').hidden=true;showTab('sky');requestAnimationFrame(()=>document.querySelector('.foot').scrollIntoView({behavior:'smooth',block:'center'}));};
+async function openRouterChat(messages,maxTokens,signal){
+  const key=getKey(),model=currentModel();
+  if(!key)throw {code:'no_key'};if(!model)throw {code:'no_model'};
+  const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',signal,
+    headers:{'Authorization':'Bearer '+key,'Content-Type':'application/json','X-Title':'Dream Board'},
+    body:JSON.stringify({model,messages,max_tokens:maxTokens})});
+  if(!r.ok){let msg='';try{const j=await r.json();msg=(j.error&&j.error.message)||'';}catch(e){}throw {code:'http',status:r.status,message:msg};}
+  const j=await r.json();const t=j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content;
+  if(!t)throw {code:'empty'};return {text:String(t).trim(),model:j.model||model};
+}
+function orErrorText(e){
+  if(!e)return 'Something went wrong. Try again.';
+  if(e.name==='AbortError')return 'Stopped.';
+  if(e.code==='no_key')return 'Add your OpenRouter key in Settings first.';
+  if(e.code==='no_model')return 'Choose a model in Settings first.';
+  if(e.code==='empty')return 'The model sent back an empty answer. Try again, or pick another model in Settings.';
+  if(e.code==='http'){if(e.status===401)return 'OpenRouter didn’t accept that key. Check it in Settings.';if(e.status===402)return 'Your OpenRouter credits have run out. Top up, then try again.';if(e.status===404||e.status===400)return 'That model isn’t available. Pick another in Settings.'+(e.message?' ('+e.message+')':'');if(e.status===429)return 'Too many requests right now. Wait a minute, then try again.';return 'OpenRouter error '+e.status+(e.message?': '+e.message:'');}
+  return 'Couldn’t reach OpenRouter. Check your connection and try again.';
+}
+$('orTest').onclick=async()=>{
+  if($('orKey').value.trim())setKey($('orKey').value.trim());
+  $('orStatus').textContent='Testing…';$('orTest').disabled=true;
+  try{const r=await openRouterChat([{role:'user',content:'Reply with just the word: connected'}],32);$('orStatus').textContent='Connected. '+r.model+' replied.';}
+  catch(e){$('orStatus').textContent=orErrorText(e);}
+  $('orTest').disabled=false;
+};
+
+/* ---------- AI spread reading ---------- */
+let lastReading=null, aiCtl=null;
+const LEN_WORDS={short:'about 150 to 220 words',medium:'about 350 to 500 words',long:'about 700 to 1000 words'};
+const TONE_WORDS={gentle:'gentle, warm, and encouraging',direct:'direct, honest, and grounded, without sugarcoating',poetic:'poetic, mystical, and image-rich, while staying clear'};
+function spreadPrompt(cards){
+  const lines=cards.map((c,i)=>{
+    const deckName=DECKNAMES[c.deck]||'';
+    const kind=c.deck==='trad'?'a classic tarot card':c.deck==='clear'?'a personal reminder card from the querent’s own deck':'a personal lesson card from the querent’s own deck, written in their own words';
+    return (i+1)+'. '+(c.label&&c.label!==deckName?'Position: '+c.label+' | ':'')+'Deck: '+deckName+' ('+kind+') | Card: '+c.name+(c.deck==='trad'?' | Orientation: '+(c.reversed?'reversed':'upright'):'')+'\n   Meaning on the card: '+(c.meaning||'');
+  }).join('\n');
+  return 'You are an intuitive tarot reader giving a reading for one person.\n\n'+
+'Use ONLY the cards below. You know nothing else about the person: do not guess at their life, relationships, job, history, or circumstances, and do not invent facts about them. Personal deck cards carry the person’s own words; treat those words as that card’s meaning.\n\n'+
+'Read the spread as one story. Briefly honor each card in its place, then spend most of the reading on how the cards speak to each other: the pairs and combinations, the tensions, the echoes, and what unfolds from first card to last. Respect reversed cards as reversed. End with one short closing message and one question the person can sit with, to help them listen to their own intuition.\n\n'+
+'Write in a voice that is '+TONE_WORDS[prefs.readTone]+'. Length: '+LEN_WORDS[prefs.readLen]+'. Plain text with short paragraphs; no headings, no bullet lists, no markdown.\n\nThe spread:\n'+lines;
+}
+async function readSpread(){
+  if(!lastPull||!lastPull.cards.length)return;
+  const box=$('aiBox'),out=$('aiText');box.hidden=false;
+  const prompt=spreadPrompt(lastPull.cards);
+  const useClaude=inClaude&&prefs.allowClaude;
+  if(inClaude&&!useClaude){out.classList.remove('thinking');$('aiLabel').textContent='The reading';
+    out.textContent='Readings are set to use DeepSeek through OpenRouter, which only works in your standalone copy. To have Claude write readings here instead, turn that on in Settings.';return;}
+  if(!inClaude&&!getKey()){out.classList.remove('thinking');out.textContent='Add your OpenRouter key in Settings to get a reading.';fillSettings();$('settings').hidden=false;return;}
+  aiCtl=new AbortController();$('aiBtn').disabled=true;$('aiStop').hidden=false;
+  out.classList.add('thinking');out.textContent='Reading the cards…';
+  $('aiLabel').textContent='The reading'+(useClaude?' · Claude':' · '+currentModel().replace(/^~?[^/]+\//,''));
+  try{
+    if(useClaude){
+      const sample=await claude.use('sample');if(!sample)throw {code:'no_sample'};
+      const r=await sample(prompt,{signal:aiCtl.signal,cache:false,onText:({text})=>{out.classList.remove('thinking');out.textContent=text;}});
+      out.classList.remove('thinking');out.textContent=r.text;lastReading={text:r.text,model:'Claude'};
+    }else{
+      const r=await openRouterChat([{role:'user',content:prompt}],prefs.readLen==='long'?6000:4000,aiCtl.signal);
+      out.classList.remove('thinking');out.textContent=r.text;lastReading={text:r.text,model:r.model};
+    }
+  }catch(e){
+    out.classList.remove('thinking');
+    if(useClaude){out.textContent=e&&e.code==='not_granted'?'Claude wasn’t allowed for this page. You can allow it from the artifact’s permissions.':e&&e.code==='rate_limited'?'Too many requests right now. Try again in a minute.':(e&&e.text)||'The reading couldn’t be written. Try again.';}
+    else out.textContent=orErrorText(e);
+  }
+  $('aiBtn').disabled=false;$('aiStop').hidden=true;aiCtl=null;
+}
+$('aiBtn').onclick=readSpread;
+$('aiStop').onclick=()=>{if(aiCtl)aiCtl.abort();};
+applyMotion();
+
+/* ---------- reading log ---------- */
+let lastPull=null, readings=[], rPendingDelete=null;
+$('saveReadingBtn').onclick=async()=>{
+  if(!db||!lastPull)return;$('saveReadingBtn').disabled=true;
+  try{await db.collection('readings').add({deck:lastPull.deck,cards:lastPull.cards,notes:$('readingNotes').value,aiReading:lastReading&&lastReading.text||'',aiModel:lastReading&&lastReading.model||'',createdAt:new Date().toISOString()});
+    $('saveReading').hidden=true;toast('Reading saved to your log');}
+  catch(e){toast('Could not save the reading. Try again.');}
+  $('saveReadingBtn').disabled=false;
+};
+function renderReadings(){
+  const list=$('readingList');list.replaceChildren();$('readEmpty').hidden=readings.length>0;
+  const counts={};readings.forEach(r=>(r.cards||[]).forEach(c=>{counts[c.name]=(counts[c.name]||0)+1;}));
+  const top=Object.entries(counts).filter(([,n])=>n>1).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  const fq=$('frequent');fq.replaceChildren();
+  if(top.length){fq.append(el('span','freqlabel','Cards that keep finding you'));top.forEach(([n,k])=>fq.append(el('span','freqchip',n+' ×'+k)));}
+  readings.forEach(r=>{
+    const card=el('div','rcard');
+    card.append(el('div','rmeta',fmt(r.createdAt)+' · '+(DECKNAMES[r.deck]||'Lesson deck')));
+    const rc=el('div','rcards');(r.cards||[]).forEach(c=>{const p=el('span','rpill');if(c.label)p.append(el('small',null,c.label));p.append(document.createTextNode(c.name+(c.reversed?' (reversed)':'')));rc.append(p);});card.append(rc);
+    if(r.notes)card.append(el('p','rnotes',r.notes));
+    if(r.aiReading){const d=el('details');d.append(el('summary','rmeta','The reading'+(r.aiModel?' · '+r.aiModel.replace(/^~?[^/]+\//,''):'')),el('p','raitext',r.aiReading));card.append(d);}
+    if(canWrite){const a=el('div','actions');
+      if(rPendingDelete===r.id)a.append(el('span','confirm','Remove this reading?'),btn('act danger','Remove',async()=>{try{await db.collection('readings').doc(r.id).delete();rPendingDelete=null;}catch(e){toast('Could not remove. Try again.');}}),btn('act','Keep it',()=>{rPendingDelete=null;renderReadings();}));
+      else a.append(btn('act danger','Remove',()=>{rPendingDelete=r.id;renderReadings();}));
+      card.append(a);}
+    list.append(card);
+  });
+}
+
+/* ---------- dream journal ---------- */
+let dreams=[], jOpen=new Set(), jEditing=null, jPendingDelete=null, jReflOpen=new Set();
+const JTAGS=['Vivid','Lucid','Recurring','Flying','Nightmare','Prophetic','Healing'];
+const jSel=new Set();
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+function fmtNight(s){try{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d).toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric',year:'numeric'});}catch(e){return s||'';}}
+function monthKey(s){try{const [y,m]=s.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString(undefined,{month:'long',year:'numeric'});}catch(e){return '';}}
+$('jDate').value=todayISO();
+JTAGS.forEach(t=>{const b=btn('jtag',t,()=>{jSel.has(t)?jSel.delete(t):jSel.add(t);b.setAttribute('aria-pressed',String(jSel.has(t)));});b.setAttribute('aria-pressed','false');$('jTags').append(b);});
+$('jForm').addEventListener('submit',async ev=>{
+  ev.preventDefault();const text=$('jText').value;if(!text.trim()){$('jText').focus();return;}
+  if(!db){toast('The journal is still connecting.');return;}
+  $('jSave').disabled=true;
+  try{await db.collection('dreams').add({text,title:$('jTitle').value,myReflection:$('jMine').value,dreamDate:$('jDate').value||todayISO(),tags:[...jSel],createdAt:new Date().toISOString(),via:'typed'});
+    $('jText').value='';$('jMine').value='';$('jTitle').value='';jSel.clear();document.querySelectorAll('#jTags .jtag').forEach(b=>b.setAttribute('aria-pressed','false'));$('jDate').value=todayISO();toast('Dream saved');}
+  catch(err){toast(err&&err.code==='quota_exceeded'?'The journal is full. Remove a few entries first.':'Could not save it. Try again.');}
+  $('jSave').disabled=false;
+});
+$('jSearch').addEventListener('input',renderJournal);
+function renderJournal(){
+  const q=$('jSearch').value.trim().toLowerCase(),list=$('jList');list.replaceChildren();
+  const shown=dreams.filter(d=>!q||[(d.title||''),(d.text||''),(d.myReflection||''),(d.tags||[]).join(' ')].join(' ').toLowerCase().includes(q));
+  $('jEmpty').hidden=!db||dreams.length>0;
+  let lastMonth='';
+  shown.forEach(d=>{
+    const mk=monthKey(d.dreamDate);if(mk!==lastMonth){list.append(el('div','jmonth',mk));lastMonth=mk;}
+    const tags=d.tags||[];const card=el('article','jcard');
+    if(tags.includes('Nightmare'))card.classList.add('nightmare');else if(tags.includes('Lucid'))card.classList.add('lucid');
+    const meta=el('div','jmeta');meta.append(el('span',null,fmtNight(d.dreamDate)));if(d.via==='chat')meta.append(el('span',null,'· told to Claude'));card.append(meta);
+    if(jEditing===d.id){
+      const ti=el('input');ti.id='jt-'+d.id;ti.value=d.title||'';ti.placeholder='Title (optional)';
+      const ta=el('textarea');ta.id='jx-'+d.id;ta.value=d.text;ta.rows=8;
+      const tm=el('textarea');tm.id='jm-'+d.id;tm.value=d.myReflection||'';tm.rows=4;tm.placeholder='My reflection (optional)';
+      const a=el('div','actions');
+      a.append(btn('act strong','Save',async()=>{if(!ta.value.trim())return;try{await db.collection('dreams').doc(d.id).update({title:ti.value,text:ta.value,myReflection:tm.value,editedAt:new Date().toISOString()});jEditing=null;toast('Saved');}catch(e){toast('Could not save. Try again.');}}),btn('act','Cancel',()=>{jEditing=null;renderJournal();}));
+      card.append(ti,el('div','jsection','The dream'),ta,el('div','jsection','My reflection'),tm,a);list.append(card);return;
+    }
+    if(d.title)card.append(el('h3','jctitle',d.title));
+    const long=(d.text||'').length+(d.myReflection||'').length>320,open=jOpen.has(d.id)||!long;
+    const body=el('p','jbody',d.text);if(!open)body.classList.add('clamp');card.append(body);
+    if(d.myReflection&&open)card.append(el('div','jsection','My reflection'),el('p','jminebody',d.myReflection));
+    else if(d.myReflection)card.append(el('div','jsection','My reflection · tap Read all'));
+    if(tags.length){const tg=el('div','jcardtags');tags.forEach(t=>tg.append(el('span','jchip',t)));card.append(tg);}
+    const born=entries.filter(e=>e.fromDream===d.id);
+    if(born.length){const bd=el('div','borndreams');bd.append(el('span','jsection','Lessons born here'));born.forEach(e=>bd.append(btn('bornchip',e.cardName||'A lesson',()=>goToLesson(e.id))));card.append(bd);}
+    card.id='dream-'+d.id;
+    if(d.reflection&&jReflOpen.has(d.id))card.append(el('p','jrefl',d.reflection));
+    const a=el('div','actions');
+    if(long)a.append(btn('act strong',jOpen.has(d.id)?'Show less':'Read all',()=>{jOpen.has(d.id)?jOpen.delete(d.id):jOpen.add(d.id);renderJournal();}));
+    if(d.reflection)a.append(btn('act strong',jReflOpen.has(d.id)?'Hide reflection':'Claude’s reflection',()=>{jReflOpen.has(d.id)?jReflOpen.delete(d.id):jReflOpen.add(d.id);renderJournal();}));
+    if(canWrite&&db){
+      if(jPendingDelete===d.id)a.append(el('span','confirm','Remove for good?'),btn('act danger','Remove',async()=>{try{await db.collection('dreams').doc(d.id).delete();jPendingDelete=null;toast('Removed');}catch(e){toast('Could not remove. Try again.');}}),btn('act','Keep it',()=>{jPendingDelete=null;renderJournal();}));
+      else a.append(btn('act','Edit',()=>{jEditing=d.id;jPendingDelete=null;renderJournal();}),btn('act danger','Remove',()=>{jPendingDelete=d.id;renderJournal();}));
+    }
+    card.append(a);list.append(card);
+  });
+  if(dreams.length&&!shown.length)list.append(el('p','jempty','No dreams match that.'));
+  renderPatterns();
+}
+const STOP=new Set('i me my myself we our you your he him his she her it its they them their what which who whom this that these those am is are was were be been being have has had having do does did doing a an the and but if or because as until while of at by for with about against between into through during before after above below to from up down in out on off over under again further then once here there when where why how all any both each few more most other some such no nor not only own same so than too very can will just don should now like got get went go going said says say started start kept keep could would one ones something someone thing things also back even really still was been um uh yeah okay basically actually pretty kind sort lot way little thats dont didnt couldnt wasnt im ive id youre theyre its it\'s don\'t didn\'t couldn\'t i\'m i\'ve i\'d wasn\'t again know felt feel feeling made make see saw time'.split(' '));
+function renderPatterns(){
+  const tags={};dreams.forEach(d=>(d.tags||[]).forEach(t=>tags[t]=(tags[t]||0)+1));
+  const tb=$('patTags');tb.replaceChildren();const max=Math.max(1,...Object.values(tags));
+  const te=Object.entries(tags).sort((a,b)=>b[1]-a[1]);
+  if(!te.length)tb.append(el('p','pathint','No tags yet.'));
+  te.forEach(([t,n])=>{const r=el('div','patrow');const tr=el('div','pattrack');const f=el('div','patfill');f.style.width=(n/max*100)+'%';tr.append(f);r.append(el('span',null,t),tr,el('span','patn',String(n)));tb.append(r);});
+  const words={};dreams.forEach(d=>{const seen=new Set();(d.text||'').toLowerCase().replace(/[^a-z'\s]/g,' ').split(/\s+/).forEach(w=>{w=w.replace(/^'+|'+$/g,'');if(w.length<4||STOP.has(w)||seen.has(w))return;seen.add(w);words[w]=(words[w]||0)+1;});});
+  const wb=$('patWords');wb.replaceChildren();
+  const we=Object.entries(words).filter(([,n])=>n>1||dreams.length<3).sort((a,b)=>b[1]-a[1]||a[0].localeCompare(b[0])).slice(0,14);
+  if(!we.length)wb.append(el('p','pathint','Nothing repeating yet.'));
+  we.forEach(([w,n])=>wb.append(el('span','freqchip',w+(n>1?' ×'+n:''))));
+}
+function goToDream(id){showTab('journal');jOpen.add(id);renderJournal();requestAnimationFrame(()=>{const c=$('dream-'+id);if(c)c.scrollIntoView({behavior:'smooth',block:'center'});});}
+function goToLesson(id){if(skyMode==='stars'){skyMode='clouds';try{localStorage.setItem('skyMode','clouds');}catch(e){}$('vClouds').setAttribute('aria-pressed','true');$('vStars').setAttribute('aria-pressed','false');$('starMap').hidden=true;$('cloudControls').hidden=false;$('listWrap').hidden=false;}
+  filter='all';$('search').value='';document.querySelectorAll('.chips .chip[data-f]').forEach(x=>x.setAttribute('aria-pressed',String(x.dataset.f==='all')));active=null;showTab('sky');render();
+  requestAnimationFrame(()=>{const li=document.querySelector('li[data-id="'+id+'"]');if(li){li.scrollIntoView({behavior:'smooth',block:'center'});li.classList.add('flash');setTimeout(()=>li.classList.remove('flash'),2200);}});}
+
+/* ---------- star map ---------- */
+let skyMode='clouds';
+try{if(localStorage.getItem('skyMode')==='stars')skyMode='stars';}catch(e){}
+function setSkyMode(m){skyMode=m;try{localStorage.setItem('skyMode',m);}catch(e){}
+  $('vClouds').setAttribute('aria-pressed',String(m==='clouds'));$('vStars').setAttribute('aria-pressed',String(m==='stars'));
+  const stars=m==='stars';$('starMap').hidden=!stars;$('cloudControls').hidden=stars;$('listWrap').hidden=stars;
+  if(stars){$('constBar').hidden=true;$('empty').hidden=true;drawMap();}else render();}
+$('vClouds').onclick=()=>setSkyMode('clouds');$('vStars').onclick=()=>setSkyMode('stars');
+function drawMap(){
+  if(skyMode!=='stars')return;
+  const svg=$('mapSvg'),ns='http://www.w3.org/2000/svg';svg.replaceChildren();
+  const portrait=($('starMap').clientWidth||400)<620,W=1000;
+  const G=groups.length,cols=portrait?2:4,rows=Math.max(1,Math.ceil(G/cols)),cellW=W/cols,cellH=portrait?380:340;
+  const placedIds=new Set(groups.flatMap(g=>g.ids||[]));const loose=entries.filter(e=>!placedIds.has(e.id));
+  const H=rows*cellH+(loose.length?150:30);
+  svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  const mk=(t,a)=>{const n=document.createElementNS(ns,t);for(const k in a)n.setAttribute(k,a[k]);return n;};
+  const dust=seeded('dust');for(let i=0;i<140;i++)svg.append(mk('circle',{class:'maptiny',cx:dust()*W,cy:dust()*H,r:(dust()*1.3+.4).toFixed(2),opacity:(.2+dust()*.5).toFixed(2)}));
+  const centers={};groups.forEach((g,i)=>{const c=i%cols,r=Math.floor(i/cols);centers[g.id]={x:(c+.5)*cellW,y:r*cellH+cellH*.56,top:r*cellH+34};});
+  const pos={};const maxR=Math.min(cellW,cellH)*.36;
+  groups.forEach(g=>{const ids=(g.ids||[]).filter(id=>entries.some(e=>e.id===id));const single=ids.filter(id=>groupsOf(id).length===1);
+    const rnd=seeded(g.id);const off=rnd()*6.28;
+    single.forEach((id,i)=>{const a=off+i*2.39996,rr=34+(maxR-34)*Math.sqrt((i+1)/single.length);pos[id]={x:centers[g.id].x+Math.cos(a)*rr,y:centers[g.id].y+Math.sin(a)*rr*.85};});});
+  entries.forEach(e=>{const gs=groupsOf(e.id);if(gs.length>1){const rnd=seeded(e.id);const x=gs.reduce((s,g)=>s+centers[g.id].x,0)/gs.length,y=gs.reduce((s,g)=>s+centers[g.id].y,0)/gs.length;pos[e.id]={x:x+(rnd()-.5)*70,y:y+(rnd()-.5)*50};}});
+  loose.forEach((e,i)=>{const rnd=seeded(e.id);pos[e.id]={x:W*(i+.5)/loose.length+(rnd()-.5)*30,y:rows*cellH+50+rnd()*70};});
+  groups.forEach(g=>{const c=centers[g.id];const pts=(g.ids||[]).filter(id=>pos[id]).map(id=>pos[id]).sort((p,q)=>Math.atan2(p.y-c.y,p.x-c.x)-Math.atan2(q.y-c.y,q.x-c.x));
+    if(pts.length>1)svg.append(mk('polyline',{class:'mapline',points:pts.map(p=>p.x.toFixed(1)+','+p.y.toFixed(1)).join(' ')}));});
+  groups.forEach(g=>{const t=mk('text',{class:'maplabel',x:centers[g.id].x,y:centers[g.id].top,'text-anchor':'middle'});t.textContent=g.name;svg.append(t);});
+  if(loose.length){const t=mk('text',{class:'maplabel',x:W/2,y:rows*cellH+28,'text-anchor':'middle',opacity:.6});t.textContent='Open sky';svg.append(t);}
+  entries.forEach((e,i)=>{const p=pos[e.id];if(!p)return;const bridge=groupsOf(e.id).length>1;
+    const gEl=mk('g',{class:'mapstar'+(bridge?' bridge':''),transform:'translate('+p.x.toFixed(1)+','+p.y.toFixed(1)+')',tabindex:'0',role:'button','aria-label':e.cardName||'A lesson'});
+    const tt=mk('title',{});tt.textContent=e.cardName||'A lesson';
+    const core=mk('circle',{class:'core tw',r:bridge?6.5:4.8});core.style.animationDelay=(-(i*0.53)%3.6)+'s';
+    gEl.append(tt,mk('circle',{class:'hit',r:26}),mk('circle',{class:'halo',r:bridge?18:13}),core);
+    gEl.addEventListener('click',()=>openStar(e.id));gEl.addEventListener('keydown',ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();openStar(e.id);}});
+    svg.append(gEl);});
+}
+let popId=null;
+function openStar(id){const e=entries.find(x=>x.id===id);if(!e)return;popId=id;
+  $('popConst').textContent=groupsOf(id).map(g=>g.name).join(' · ')||'Open sky';
+  $('popName').textContent=e.cardName||'';$('popText').textContent=e.text;$('popRefl').textContent=e.reflection||'';$('popRefl').hidden=true;
+  $('popReflBtn').hidden=!e.reflection;$('popReflBtn').textContent='Claude’s reflection';
+  $('starPop').hidden=false;drawPopStars();const pc=$('popCloud');pc.querySelector('.puffs').dataset.key='';requestAnimationFrame(()=>puffCloud(pc));$('popClose').focus();}
+function drawPopStars(){const c=$('popStars'),x=c.getContext('2d'),d=window.devicePixelRatio||1;c.width=innerWidth*d;c.height=innerHeight*d;
+  const rnd=seeded('pop-sky');x.fillStyle='#fff4d8';for(let i=0;i<140;i++){x.globalAlpha=.2+rnd()*.7;x.beginPath();x.arc(rnd()*c.width,rnd()*c.height,(rnd()*1.2+.3)*d,0,7);x.fill();}x.globalAlpha=1;}
+$('popReflBtn').onclick=()=>{const h=!$('popRefl').hidden;$('popRefl').hidden=h;$('popReflBtn').textContent=h?'Claude’s reflection':'Hide reflection';const pc=$('popCloud');pc.querySelector('.puffs').dataset.key='';requestAnimationFrame(()=>puffCloud(pc));};
+$('popClose').onclick=()=>{$('starPop').hidden=true;};
+$('popCloudsBtn').onclick=()=>{$('starPop').hidden=true;setSkyMode('clouds');goToLesson(popId);};
+addEventListener('keydown',ev=>{if(ev.key==='Escape'&&!$('starPop').hidden)$('popClose').click();});
+if('ResizeObserver' in window){new ResizeObserver(()=>{const pc=$('popCloud');pc.querySelector('.puffs').dataset.key='';puffCloud(pc);}).observe($('popCloud'));
+  let lastW=0;new ResizeObserver(en=>{const w=en[0].contentRect.width;if(Math.abs(w-lastW)>40){lastW=w;drawMap();}}).observe($('starMap'));}
+
+/* ---------- moon phase ---------- */
+function moonPhase(date){const syn=29.530588853,ref=Date.UTC(2000,0,6,18,14);let age=((date-ref)/864e5)%syn;if(age<0)age+=syn;return age/syn;}
+function phaseName(p){const n=['New moon','Waxing crescent','First quarter','Waxing gibbous','Full moon','Waning gibbous','Last quarter','Waning crescent'];return n[Math.round(p*8)%8];}
+function drawMoon(){
+  const c=$('moonOrb'),x=c.getContext('2d'),r=20,cx=22,cy=22,p=moonPhase(Date.now());
+  x.clearRect(0,0,44,44);
+  x.fillStyle='#2a2347';x.beginPath();x.arc(cx,cy,r,0,7);x.fill();
+  x.fillStyle='#fbefc9';x.beginPath();
+  const waxing=p<.5,k=Math.cos(p*2*Math.PI); // 1 new, -1 full
+  x.arc(cx,cy,r,-Math.PI/2,Math.PI/2,!waxing);
+  x.ellipse(cx,cy,Math.abs(k)*r,r,0,Math.PI/2,-Math.PI/2,(k>0)?waxing:!waxing);
+  x.fill();
+  $('moonPhase').textContent='· '+phaseName(p)+' tonight';
+}
+
+/* ---------- shooting star on a new lesson ---------- */
+let knownLessons=null;
+function shootingStar(){const s=$('shoot');s.classList.remove('go');void s.offsetWidth;s.classList.add('go');}
+
+/* ---------- backup ---------- */
+const inClaude=!!(window.claude&&claude.use);
+async function saveFile(filename,data,mime){
+  if(inClaude){const dl=await claude.use('downloads');if(!dl){toast('Saving files is not available in this view.');return false;}
+    try{await dl.save({filename,data});toast('Saved');return true;}
+    catch(e){if(e&&e.code==='declined')return false;toast(e&&(e.code==='extension_not_enabled'||e.code==='rejected_extension')?'That file type cannot be saved here.':'Could not save the file. Try again.');return false;}}
+  try{const url=URL.createObjectURL(new Blob([data],{type:mime}));const a=document.createElement('a');a.href=url;a.download=filename;document.body.append(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),4000);toast('Saved');return true;}
+  catch(e){toast('Could not save the file.');return false;}
+}
+function snapshotData(){const strip=o=>{const c=Object.assign({},o);return c;};
+  return {app:'dream-board',version:1,exportedAt:new Date().toISOString(),
+    lessons:entries.map(strip),dreams:dreams.map(strip),readings:readings.map(strip),constellations:groups.map(strip),reminders:reminders.map(strip)};}
+$('backupJsonBtn').onclick=()=>saveFile('dream-board-backup-'+todayISO()+'.json',JSON.stringify(snapshotData(),null,1),'application/json');
+$('offlineBtn').onclick=()=>{
+  if(!PRISTINE||!PRISTINE.app){toast('Could not build the offline copy here.');return;}
+  const seed=JSON.stringify(snapshotData()).replace(/</g,'\\u003c');
+  const html='<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">'+
+    '<title>Dream Board</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gloock&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap">'+
+    '<style>html,body{margin:0}:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>'+
+    PRISTINE.styles+'</head><body>'+PRISTINE.body+'<script id="seed">window.__SEED__='+seed+';<\/script><script id="app">'+PRISTINE.app+'<\/script></body></html>';
+  saveFile('dream-board-'+todayISO()+'.html',html,'text/html');
+};
+/* import */
+let pendingImport=null;
+$('importFile').addEventListener('change',async ev=>{
+  const f=ev.target.files&&ev.target.files[0];ev.target.value='';if(!f)return;
+  try{const data=JSON.parse(await f.text());if(!data||data.app!=='dream-board')throw new Error('x');pendingImport=data;
+    const n=k=>(data[k]||[]).length;
+    $('importSummary').textContent='This backup holds '+n('lessons')+' lessons, '+n('dreams')+' dreams, '+n('readings')+' readings, '+n('reminders')+' Clear Skies cards, and '+n('constellations')+' constellations. Restoring adds anything missing and replaces matching entries with the backup’s version. Nothing else is removed.';
+    $('importBox').hidden=false;$('importBox').scrollIntoView({behavior:'smooth',block:'center'});}
+  catch(e){toast('That file is not a Dream Board backup.');}
+});
+$('importCancel').onclick=()=>{pendingImport=null;$('importBox').hidden=true;};
+$('importGo').onclick=async()=>{
+  if(!pendingImport||!db)return;$('importGo').disabled=true;let done=0,failed=0;
+  for(const col of ['lessons','dreams','readings','constellations','reminders']){
+    for(const item of (pendingImport[col]||[])){const {id,...rest}=item;if(!id)continue;
+      try{await db.collection(col).doc(String(id)).set(rest);done++;}catch(e){failed++;}}}
+  $('importGo').disabled=false;$('importBox').hidden=true;pendingImport=null;
+  toast(failed?'Restored '+done+' entries; '+failed+' could not be restored.':'Restored '+done+' entries');
+};
+
+/* ---------- local store for offline copies ---------- */
+function makeLocalDB(seed){
+  const KEY='dream-board-data';const COLS=['lessons','dreams','readings','constellations','reminders'];
+  let state=null;
+  try{const saved=JSON.parse(localStorage.getItem(KEY)||'null');if(saved&&(!seed||saved.seedAt===seed.exportedAt))state=saved;}catch(e){}
+  if(!state){state={seedAt:seed?seed.exportedAt:null};COLS.forEach(c=>{state[c]={};((seed&&seed[c])||[]).forEach(item=>{const {id,...rest}=item;if(id)state[c][id]=rest;});});}
+  const listeners=[];
+  const persist=()=>{try{localStorage.setItem(KEY,JSON.stringify(state));}catch(e){}};
+  const changed=name=>{persist();listeners.filter(l=>l.name===name).forEach(l=>l.fire());};
+  persist();
+  return {collection(name){let ord=null,dir='asc',lim=null;
+    const q={orderBy(f,d){ord=f;dir=d||'asc';return q;},limit(n){lim=n;return q;},
+      onSnapshot(cb){const fire=()=>{let docs=Object.entries(state[name]||{}).map(([id,d])=>({id,data:()=>d}));
+          if(ord)docs.sort((a,b)=>{const x=a.data()[ord],y=b.data()[ord];if(x===y)return 0;if(x===undefined)return 1;if(y===undefined)return -1;return (x>y?1:-1)*(dir==='desc'?-1:1);});
+          if(lim)docs=docs.slice(0,lim);cb({docs});};
+        const l={name,fire};listeners.push(l);setTimeout(fire,0);return()=>{const i=listeners.indexOf(l);if(i>=0)listeners.splice(i,1);};},
+      doc(id){return{
+        set:async d=>{(state[name]=state[name]||{})[id]=JSON.parse(JSON.stringify(d));changed(name);},
+        update:async d=>{if(!state[name]||!state[name][id])throw{code:'invalid_argument'};Object.assign(state[name][id],JSON.parse(JSON.stringify(d)));changed(name);},
+        delete:async()=>{if(state[name])delete state[name][id];changed(name);}};},
+      add:async d=>{const id='x'+Date.now().toString(36)+Math.random().toString(36).slice(2,7);await q.doc(id).set(d);return{id};}};
+    return q;}};
+}
+
+$('backupBtn').onclick=async()=>{
+  const L=[];const line=(s='')=>L.push(s);
+  line('DREAM BOARD BACKUP');line('Saved '+new Date().toLocaleString());line();
+  line('=== LESSONS ('+entries.length+') ===');line();
+  [...entries].reverse().forEach(e=>{line('['+fmt(e.createdAt)+'] '+(e.cardName?e.cardName+' · ':'')+(VIA[e.via||'typed']||''));line(e.text);
+    if(e.reflection){line('  Claude’s reflection: '+e.reflection);}
+    const gs=groupsOf(e.id).map(g=>g.name);if(gs.length)line('  Constellations: '+gs.join(', '));line();});
+  line('=== DREAMS ('+dreams.length+') ===');line();
+  [...dreams].reverse().forEach(d=>{line('[Night of '+fmtNight(d.dreamDate)+']'+(d.title?' '+d.title:'')+((d.tags||[]).length?' · '+d.tags.join(', '):''));line(d.text);
+    if(d.myReflection){line('  My reflection: '+d.myReflection);}if(d.reflection){line('  Claude’s reflection: '+d.reflection);}line();});
+  line('=== CLEAR SKIES ('+reminders.length+') ===');line();
+  [...reminders].reverse().forEach(r=>{line((r.cardName?'['+r.cardName+'] ':'')+r.text);line();});
+  line('=== TAROT READINGS ('+readings.length+') ===');line();
+  [...readings].reverse().forEach(r=>{line('['+fmt(r.createdAt)+'] '+(DECKNAMES[r.deck]||'Lesson deck'));(r.cards||[]).forEach(c=>line('  '+(c.label?c.label+': ':'')+c.name+(c.reversed?' (reversed)':'')));if(r.notes)line('  Notes: '+r.notes);if(r.aiReading)line('  The reading: '+r.aiReading);line();});
+  saveFile('dream-board-'+todayISO()+'.txt',L.join('\n'),'text/plain');
+};
+
+const VIEWS={sky:'skyView',tarot:'tarotView',journal:'journalView'},TABS={sky:'tabSky',tarot:'tabTarot',journal:'tabJournal'};
+function showTab(t){Object.keys(VIEWS).forEach(k=>{$(VIEWS[k]).hidden=k!==t;$(TABS[k]).setAttribute('aria-pressed',String(k===t));});
+  if(t==='tarot')updateDeckInfo();
+  else if(t==='journal')renderJournal();
+  else requestAnimationFrame(()=>{document.querySelectorAll('.bubble').forEach(b=>{b.querySelector('.puffs').dataset.key='';puffCloud(b);});drawThreads();});}
+Object.keys(TABS).forEach(k=>$(TABS[k]).onclick=()=>showTab(k));
+if(location.hash==='#tarot')showTab('tarot');if(location.hash==='#journal')showTab('journal');
+
+applyPhase();setInterval(()=>{applyPhase();drawMoon();},5*60*1000);drawMoon();setSkyMode(skyMode);
+
+(async()=>{
+  if(!inClaude){db=makeLocalDB(window.__SEED__||null);let barGone=false;try{barGone=localStorage.getItem('dream-board-bar-dismissed')==='1';}catch(e){}$('offlineBar').hidden=barGone;$('offlineBtn').hidden=true;}
+  else{
+    const [d,u]=await Promise.all([claude.use('db'),claude.use('user')]);
+    if(!d){$('count').textContent='Sign in to Claude to see your lessons.';$('writeBox').hidden=true;return;}
+    db=d;
+    try{const w=u?await u.can('data.write'):null;if(w===false){canWrite=false;$('writeBox').hidden=true;}}catch(e){}
+  }
+  db.collection('lessons').orderBy('createdAt','desc').onSnapshot(s=>{entries=s.docs.map(x=>Object.assign({id:x.id},x.data()));
+      if(knownLessons&&entries.some(e=>!knownLessons.has(e.id)))shootingStar();knownLessons=new Set(entries.map(e=>e.id));render();if(!$('journalView').hidden)renderJournal();},
+    ()=>{$('count').textContent='The sky lost its connection. Reload to try again.';});
+  db.collection('reminders').orderBy('createdAt','asc').onSnapshot(s=>{reminders=s.docs.map(x=>Object.assign({id:x.id},x.data()));if(!$('tarotView').hidden)updateDeckInfo();},()=>{});
+  db.collection('readings').orderBy('createdAt','desc').limit(200).onSnapshot(s=>{readings=s.docs.map(x=>Object.assign({id:x.id},x.data()));renderReadings();},()=>{});
+  db.collection('dreams').orderBy('dreamDate','desc').onSnapshot(s=>{dreams=s.docs.map(x=>Object.assign({id:x.id},x.data())).sort((a,b)=>(b.dreamDate||'').localeCompare(a.dreamDate||'')||(b.createdAt||'').localeCompare(a.createdAt||''));renderJournal();},()=>{});
+  db.collection('constellations').orderBy('order').onSnapshot(s=>{groups=s.docs.map(x=>Object.assign({id:x.id},x.data()));render();},()=>{});
+})();
+</script>
+<script>if("serviceWorker" in navigator&&location.protocol==="https:"){navigator.serviceWorker.register("sw.js").catch(function(){});}try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}</script></body></html>
